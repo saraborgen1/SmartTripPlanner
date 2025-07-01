@@ -1,8 +1,8 @@
 from fastapi import APIRouter, Query
-from ..services.weather_service import get_fake_weather_data
+from ..services.weather_service import get_weather_forecast
 
 router = APIRouter()
 
 @router.get("/weather_data")
 def weather(city: str = Query(..., description="שם העיר")):
-    return get_fake_weather_data(city)
+    return get_weather_forecast(city)
