@@ -1,1 +1,33 @@
+# סביבות עבודה
+venv/
+env/
+
+# קבצים זמניים של פייתון
+__pycache__/
+*.py[cod]
+*$py.class
+
+# קבצי לוגים
+*.log
+
+# IDEs (VSCode, PyCharm וכו’)
+.vscode/
+.idea/
+
+# קבצי מערכת
+.DS_Store
+Thumbs.db
+
+# קבצי קומפילציה
+*.so
+*.dll
+*.exe
+
+# קבצים זמניים של Jupyter (אם יש)
+.ipynb_checkpoints/
+
+# קובצי cache
+.cache/
+*.egg-info/
+.eggs/
 
