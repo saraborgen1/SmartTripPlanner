@@ -1,8 +1,8 @@
-from models.trip import Trip
-from database.fake_db import load_data, save_data, TRIPS_FILE
+from server.models import trip
+from server.database import db_config
 
 # יצירת טיול חדש – שמירה לקובץ JSON
-def create_trip(trip: Trip):
+def create_trip(trip: trip.Trip):
     trips = load_data(TRIPS_FILE)      # טען את כל הטיולים הקיימים
     trips.append(trip.dict())          # המר את הטיול למילון והוסף לרשימה
     save_data(TRIPS_FILE, trips)       # שמור את הרשימה המעודכנת לקובץ

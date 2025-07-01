@@ -1,15 +1,14 @@
 from fastapi import APIRouter, HTTPException
-from models.user import User
-from models.trip import Trip
-from services.trip_service import create_trip, get_user_trips
-from database.fake_db import load_data, save_data, USERS_FILE
+from server.models import user
+from server.models import trip
+from server.services import trip_service
 
 #יוצרת אובייקט router – שבו נרשום את כל הנתיבים (endpoints) של המשתמשים והטיולים
 router = APIRouter()
 
 # נקודת קצה לרישום משתמש חדש
 @router.post("/register")
-def register(user: User):
+def register(user: user.User):
     users = load_data(USERS_FILE)  # טען את המשתמשים מקובץ JSON
     # בדיקה אם שם המשתמש כבר קיים
     if any(u["username"] == user.username for u in users):
@@ -20,7 +19,7 @@ def register(user: User):
 
 # נקודת קצה להתחברות משתמש קיים
 @router.post("/login")
-def login(user: User):
+def login(user: user.User):
     users = load_data(USERS_FILE)
     if any(u["username"] == user.username and u["password"] == user.password for u in users):
         return {"message": "Login successful"}
@@ -28,10 +27,10 @@ def login(user: User):
 
 # נקודת קצה ליצירת טיול חדש
 @router.post("/create_trip")
-def create_new_trip(trip: Trip):
-    return create_trip(trip)
+def create_new_trip(trip: trip.Trip):
+    return trip_service.create_trip(trip)
 
 # נקודת קצה לשליפת כל הטיולים של משתמש מסוים
 @router.get("/my_trips/{username}")
 def get_my_trips(username: str):
-    return get_user_trips(username)
+    return trip_service.get_user_trips(username)

@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from backend.api import user, ai  # מייבא את הנתיבים
+from server.api import user, ai
 import uvicorn
 
 app = FastAPI(title="Smart Trip API")
