@@ -1,26 +1,28 @@
-# server/main.py
 from fastapi import FastAPI
-from .api import api as ai
-from .api import opentrip
-from .api import weather
+from fastapi.middleware.cors import CORSMiddleware
+from backend.api import user, ai  # מייבא את הנתיבים
+import uvicorn
 
+app = FastAPI(title="Smart Trip API")
 
-app = FastAPI()
+# מאפשר גישה מה-Frontend
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # בזמן פיתוח – אפשר לשים כתובת מדויקת בפרודקשן
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-app.include_router(opentrip.router)
-app.include_router(weather.router)
+# רישום הנתיבים
+app.include_router(user.router, prefix="/user")
+app.include_router(ai.router, prefix="/ai")
 
-
-# רישום הנתיב של הסוכן
-app.include_router(ai.router)
-
+# בדיקה שהשרת רץ
 @app.get("/")
-def read_root():
-    return {"msg": "SmartTripPlanner backend is running!"}
+def root():
+    return {"message": "Smart Trip API is running ✅"}
 
-
-
-
-
-
-
+# הפעלה מקומית (אופציונלי)
+if __name__ == "__main__":
+    uvicorn.run("main:app", host="127.0.0.1", port=8000, reload=True)
