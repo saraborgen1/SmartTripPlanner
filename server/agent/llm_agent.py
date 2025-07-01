@@ -1,11 +1,17 @@
-# agent/llm_agent.py
+import requests
 
 def ask_ai(question: str) -> str:
-    """
-    מדמה סוכן AI שמחזיר תשובה לשאלה טיולית.
-    
-    :param question: שאלה על יעד או טיול
-    :return: תשובה חכמה כביכול
-    """
-    # TODO: בהמשך להחליף במימוש אמיתי עם RAG + Ollama או OpenAI
-    return f"🧠 אני הסוכן החכם! שאלת: {question}\nבקרוב אשלוף עבורך תשובות חכמות ממקורות שונים."
+    try:
+        response = requests.post(
+            "http://localhost:11434/api/generate",
+            json={
+                "model": "mistral",
+                "prompt": question,
+                "stream": False
+            },
+            timeout=30
+        )
+        data = response.json()
+        return data.get("response", "לא התקבלה תשובה")
+    except Exception as e:
+        return f"שגיאה בתקשורת עם Ollama: {str(e)}"
