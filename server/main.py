@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from server.api import user, ai
+from server.api import ai, user_routes
 import uvicorn
 
 app = FastAPI(title="Smart Trip API")
@@ -15,7 +15,7 @@ app.add_middleware(
 )
 
 # רישום הנתיבים
-app.include_router(user.router, prefix="/user")
+app.include_router(user_routes.router, prefix="/user")
 app.include_router(ai.router, prefix="/ai")
 
 # בדיקה שהשרת רץ
