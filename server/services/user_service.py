@@ -8,15 +8,14 @@ def register_user(user: User):
     cursor = conn.cursor()                  # יצירת סמן (cursor) לביצוע שאילתות
 
     # בדיקה אם המשתמש כבר קיים בטבלה
-    cursor.execute("SELECT * FROM users WHERE username = ?", user.username)
+    cursor.execute("SELECT * FROM users WHERE username = ?", (user.username,))
     if cursor.fetchone():                   # אם נמצאה תוצאה – המשתמש כבר קיים
         raise HTTPException(status_code=400, detail="Username already exists")
 
     # הוספת המשתמש החדש לטבלה
     cursor.execute(
         "INSERT INTO users (username, password) VALUES (?, ?)",
-        user.username,
-        user.password
+         (user.username, user.password)
     )
     conn.commit()                           # שמירה של השינויים במסד הנתונים
     return {"message": "User registered successfully"}
@@ -29,11 +28,10 @@ def login_user(user: User):
     # בדיקת קיום משתמש עם שם וסיסמה תואמים
     cursor.execute(
         "SELECT * FROM users WHERE username = ? AND password = ?",
-        user.username,
-        user.password
+        (user.username, user.password)
     )
     if cursor.fetchone():                   # אם נמצא משתמש – החיבור הצליח
-        return {"message": "Login successful"}
+        return {"access_token": f"token_for_{user.username}"}
 
     # אחרת – שם משתמש או סיסמה שגויים
     raise HTTPException(status_code=401, detail="Invalid username or password")
