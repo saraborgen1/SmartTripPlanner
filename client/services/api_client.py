@@ -6,7 +6,7 @@
 
 import requests
 from typing import Any, Dict, List
-from utils.constants import BASE_URL
+from client.utils.constants import BASE_URL
 
 # יוצרים Session כדי למחזר חיבורים ולשפר ביצועים/ניהול כותרות (Headers)
 _session = requests.Session()
