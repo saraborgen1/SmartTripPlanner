@@ -1,22 +1,23 @@
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QPushButton, QLabel
+from PySide6.QtCore import Qt
 
 class MainView(QWidget):
-    def __init__(self):
+    def __init__(self, go_to_auth_callback):
         super().__init__()
         self.setWindowTitle("Smart Trip Planner")
         self.setMinimumSize(400, 300)
 
         layout = QVBoxLayout()
 
-        self.label = QLabel("Welcome to SmartTripPlanner!")
+        self.label = QLabel("Welcome")
+        self.label.setAlignment(Qt.AlignCenter)
         layout.addWidget(self.label)
 
-        self.login_button = QPushButton("Login")
-        self.register_button = QPushButton("Register")
-        self.search_button = QPushButton("Search Trips")
+        # כפתור יחיד → למסך ההתחברות/הרשמה
+        self.auth_button = QPushButton("Login / Register")
+        layout.addWidget(self.auth_button)
 
-        layout.addWidget(self.login_button)
-        layout.addWidget(self.register_button)
-        layout.addWidget(self.search_button)
+        self._go_to_auth = go_to_auth_callback
+        self.auth_button.clicked.connect(self._go_to_auth)
 
         self.setLayout(layout)
