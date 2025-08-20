@@ -1,48 +1,42 @@
-#מייבא את הספרייה 
-# requests
-# שמאפשרת לשלוח בקשות 
-# HTTP 
-# לשרתים – במקרה שלנו לשרת של המודל 
-# AI.
+# server/agent/llm_agent.py
+# -------------------------
+# תקשורת עם Ollama מקומית דרך REST
+
 import requests
 
-#מגדיר פונקציה בשם 
-# ask_ai
-# שמקבלת פרמטר 
-# question  
-# שהוא מחרוזת 
-# ומחזירה תשובה גם כמחרוזת
-def ask_ai(question: str) -> str:
+OLLAMA_URL = "http://127.0.0.1:11434/api/generate"  # עדיף 127.0.0.1 מאשר localhost
+MODEL_NAME = "mistral:latest"                        # השתמש בתג שמופיע ב-/api/tags
+DEFAULT_TIMEOUT = 90                                 # העלאת timeout (מודלים לפעמים איטיים)
+
+def ask_ai(question: str, timeout: int = DEFAULT_TIMEOUT) -> str:
+    """
+    שולח שאלה למודל דרך Ollama ומחזיר את המחרוזת 'response'.
+    במקרה של שגיאה מחזיר טקסט שגיאה ברור.
+    """
     try:
-        #שולח בקשת 
-        # POST
-        # לשרת – כלומר, שולח מידע (במקרה הזה שאלה)
-        #  למודל 
-        # AI 
-        # מקומי
-        response = requests.post(
-            #זו הכתובת  של השרת המקומי שמריץ את המודל 
-            # Ollama
-            "http://localhost:11434/api/generate",
-            #זה המידע שנשלח לגוף הבקשה
+        resp = requests.post(
+            OLLAMA_URL,
             json={
-                #המודל שבו נשתמש – במקרה הזה מודל בשם
-                # "mistral"
-                "model": "mistral",
-                #השאלה שנשאלה   
-                "prompt": question,
-                #אנחנו לא רוצים שהתשובה תגיע בהזרמה (שורה-שורה), אלא במכה אחת
-                "stream": False
+                "model": MODEL_NAME,   # שם המודל כפי שהוא מותקן אצלך
+                "prompt": question,    # הטקסט/שאלה למודל
+                "stream": False        # לקבל תשובה בבת אחת (לא סטרימינג)
             },
-            #אם השרת לא עונה תוך 30 שניות – נעצור את הבקשה ונעבור לשגיאה
-            timeout=30
+            timeout=timeout,
         )
-        #מקבל את התשובה מהשרת וממיר אותה לקובץ 
-        # JSON 
-        # (כמו מילון בפייתון)
-        data = response.json()
-        #מחזיר את התשובה מהמודל, אם ישנה. אם לא, מחזיר הודעה מתאימה
-        return data.get("response", "לא התקבלה תשובה")
-    #אם קרתה שגיאה כלשהי (כמו שהשרת לא עונה או שאין חיבור) – נעבור לפה
-    except Exception as e:
-        return f"שגיאה בתקשורת עם Ollama: {str(e)}"
+        # אם השרת החזיר קוד שאינו 2xx – נזרוק חריגה עם פרטים
+        resp.raise_for_status()
+
+        # ניסיון לפענח JSON; אם לא תקין – ניפול ל־except
+        data = resp.json()
+
+        # Ollama מחזיר שדה 'response' כשstream=False
+        return (data.get("response") or "").strip() or "לא התקבלה תשובה"
+    
+    except requests.Timeout:
+        return "שגיאה: המודל לא השיב בזמן (Timeout). נסי שוב או הגדילי את ה-Timeout."
+    except ValueError:
+        # קורה אם הגוף לא JSON תקין
+        return f"שגיאה: תשובה לא תקינה מהמודל: {resp.text[:200]}..."
+    except requests.RequestException as e:
+        # שגיאות רשת/HTTP אחרות
+        return f"שגיאה בתקשורת עם Ollama: {e}"

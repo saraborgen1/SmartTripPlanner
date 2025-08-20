@@ -1,30 +1,46 @@
+from client.services import api_client
 import requests
-from server.models.user import User  # מייבא את מחלקת User שמכילה שם משתמש וסיסמה
 
 class LoginPresenter:
-    def __init__(self, view):
-        self.view = view  # שומר הפניה למסך (LoginView)
+    def __init__(self, view, session_manager):
+        self.view = view
+        self.session = session_manager
 
-    def login(self, username, password):
-        user = User(username=username, password=password)  # יוצר אובייקט מסוג User
-
+    def login(self, username: str, password: str):
         try:
-            # שולח בקשת POST לשרת
-            response = requests.post("http://127.0.0.1:8000/login", json=user.dict(), timeout=10)
-            print("RESPONSE STATUS:", response.status_code)
-            print("RESPONSE BODY:", response.text)
+            data = api_client.login(username, password)
+            token = data.get("access_token")
+            if not token:
+                self.view.show_error("Login failed: Token not received.")
+                return
+            # שומרים סשן וממשיכים למסך הראשי
+            if self.session:
+                self.session.login(token, username)
+            self.view.show_success(token)
+        except requests.HTTPError as e:
+            resp = e.response
+            try:
+                detail = resp.json().get("detail", resp.text)
+            except Exception:
+                detail = resp.text or str(e)
+            self.view.show_error(detail or "Login failed.")
+        except requests.RequestException as e:
+            self.view.show_error(f"Server error: {e}")
 
-            if response.status_code == 200:
-                data = response.json()
-                token = data.get("access_token")  # קבלת הטוקן מהשרת
-
-                if token:
-                    self.view.go_to_main_view(token, username)
-                else:
-                    self.view.show_error("Login failed: Token not received.")
-            else:
-                error_message = response.json().get("detail", "Login failed.")
-                self.view.show_error(error_message)
-
-        except requests.exceptions.RequestException as e:
+    def register(self, username: str, password: str):
+        if not username or not password:
+            self.view.show_error("Both fields are required.")
+            return
+        try:
+            data = api_client.register(username, password)
+            # אחרי הרשמה מוצלחת—ננסה להתחבר אוטומטית
+            self.login(username, password)
+        except requests.HTTPError as e:
+            resp = e.response
+            try:
+                detail = resp.json().get("detail", resp.text)
+            except Exception:
+                detail = resp.text or str(e)
+            self.view.show_error(detail or "Registration failed.")
+        except requests.RequestException as e:
             self.view.show_error(f"Server error: {e}")

@@ -6,13 +6,14 @@
 
 import requests
 from typing import Any, Dict, List
-from utils.constants import BASE_URL
+from client.utils.constants import BASE_URL
 
 # יוצרים Session כדי למחזר חיבורים ולשפר ביצועים/ניהול כותרות (Headers)
 _session = requests.Session()
 
 # זמן קצוב ברירת מחדל לבקשות (בשניות)
 DEFAULT_TIMEOUT = 15
+AI_TIMEOUT=90
 
 
 def login(username: str, password: str) -> Dict[str, Any]:
@@ -78,3 +79,14 @@ def get_my_trips(username: str) -> List[Dict[str, Any]]:
     r = _session.get(f"{BASE_URL}/my_trips/{username}", timeout=DEFAULT_TIMEOUT)
     r.raise_for_status()
     return r.json()
+
+
+def ask_ai(question: str) -> str:
+    """
+    שולח שאלה לנתיב /ai ומחזיר את המחרוזת 'answer' מהשרת.
+    """
+    r = _session.get(f"{BASE_URL}/ai", params={"question": question}, timeout=DEFAULT_TIMEOUT)
+    r.raise_for_status()
+    data = r.json()
+    return data.get("answer", "")
+

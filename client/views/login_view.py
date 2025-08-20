@@ -4,59 +4,69 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Qt
 from client.presenters.login_presenter import LoginPresenter
 
-
 class LoginView(QWidget):
-    def __init__(self, go_to_main_view_callback, go_to_register_view_callback):
+    def __init__(self, go_to_main_view_callback, go_to_register_view_callback=None, session_manager=None):
         super().__init__()
-        self.setWindowTitle("Login")  # כותרת לחלון
-        self.setMinimumSize(400, 200)  # קובע גודל מינימלי לחלון
+        self.setWindowTitle("Login / Register")
+        self.setMinimumSize(420, 240)
 
-        self.presenter = LoginPresenter(self)  # יוצר אובייקט Presenter ושומר עליו
+        # מצב התחלתי: התחברות
+        self.mode = "login"  # או "register"
 
-        # פונקציות שיעברו למסכים אחרים
-        self.go_to_main_view = go_to_main_view_callback  # פונקציה שמעבירה למסך הראשי לאחר התחברות
-        self.go_to_register_view = go_to_register_view_callback  # פונקציה שמעבירה למסך הרשמה
+        self.presenter = LoginPresenter(self, session_manager)
 
-        layout = QVBoxLayout(self)  # יוצר פריסת אנכית
+        self.go_to_main_view = go_to_main_view_callback
 
-        # כותרת עליונה
-        title = QLabel("Login to Your Account")  # טקסט כותרת
-        title.setAlignment(Qt.AlignCenter)  # ממרכז את הכותרת
-        title.setStyleSheet("font-size: 20px; font-weight: bold;")  # עיצוב לכותרת
-        layout.addWidget(title)  # מוסיף את הכותרת לפריסה
+        layout = QVBoxLayout(self)
 
-        # שדה קלט לשם משתמש
-        self.username_input = QLineEdit()  # שדה קלט רגיל
-        self.username_input.setPlaceholderText("Username")  # טקסט רקע
-        layout.addWidget(self.username_input)  # מוסיף לפריסה
+        self.title = QLabel("Login to Your Account")
+        self.title.setAlignment(Qt.AlignCenter)
+        self.title.setStyleSheet("font-size: 20px; font-weight: bold;")
+        layout.addWidget(self.title)
 
-        # שדה קלט לסיסמה
-        self.password_input = QLineEdit()  # שדה קלט רגיל
-        self.password_input.setPlaceholderText("Password")  # טקסט רקע
-        self.password_input.setEchoMode(QLineEdit.Password)  # מסתיר את הסיסמה (••••)
-        layout.addWidget(self.password_input)  # מוסיף לפריסה
+        self.username_input = QLineEdit()
+        self.username_input.setPlaceholderText("Username")
+        layout.addWidget(self.username_input)
 
-        # כפתור התחברות
-        login_button = QPushButton("Login")  # יוצר כפתור
-        login_button.clicked.connect(self.handle_login)  # מקשר את הכפתור לפונקציה שמטפלת בהתחברות
-        layout.addWidget(login_button)  # מוסיף לפריסה
+        self.password_input = QLineEdit()
+        self.password_input.setPlaceholderText("Password")
+        self.password_input.setEchoMode(QLineEdit.Password)
+        layout.addWidget(self.password_input)
 
-        # כפתור למעבר להרשמה
-        register_button = QPushButton("Don't have an account? Sign up")  # כפתור לעבור למסך הרשמה
-        register_button.clicked.connect(self.go_to_register_view)  # מקשר לפונקציה שמעבירה למסך הרשמה
-        layout.addWidget(register_button)  # מוסיף לפריסה
+        # כפתור ראשי – משתנה לפי מצב
+        self.primary_button = QPushButton("Login")
+        self.primary_button.clicked.connect(self.handle_primary)
+        layout.addWidget(self.primary_button)
 
-    def handle_login(self):
-        # לוקח את הנתונים מהשדות ושולח אותם ל־Presenter
-        username = self.username_input.text()
+        # "קישור" קטן להחלפת מצב (Login <-> Sign up)
+        self.toggle_button = QPushButton("Don't have an account? Sign up")
+        self.toggle_button.setFlat(True)
+        self.toggle_button.clicked.connect(self.toggle_mode)
+        layout.addWidget(self.toggle_button)
+
+    def toggle_mode(self):
+        if self.mode == "login":
+            self.mode = "register"
+            self.title.setText("Create Your Account")
+            self.primary_button.setText("Create account")
+            self.toggle_button.setText("Already have an account? Log in")
+        else:
+            self.mode = "login"
+            self.title.setText("Login to Your Account")
+            self.primary_button.setText("Login")
+            self.toggle_button.setText("Don't have an account? Sign up")
+
+    def handle_primary(self):
+        username = self.username_input.text().strip()
         password = self.password_input.text()
-        self.presenter.login(username, password)
+        if self.mode == "login":
+            self.presenter.login(username, password)
+        else:
+            self.presenter.register(username, password)
 
     def show_error(self, message):
-        # מציג חלונית שגיאה עם ההודעה מהשרת
-        QMessageBox.critical(self, "Login Failed", message)
+        QMessageBox.critical(self, "Error", message)
 
     def show_success(self, token):
-        # מציג הודעת הצלחה ועובר למסך הראשי עם הטוקן ושם המשתמש
-        QMessageBox.information(self, "Login Success", f"Welcome!")
+        QMessageBox.information(self, "Success", "Welcome!")
         self.go_to_main_view(token, self.username_input.text())
