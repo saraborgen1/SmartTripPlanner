@@ -2,23 +2,40 @@
 
 class DashboardPresenter:
     """
-    Presenter למסך הדשבורד – מחבר את הכפתורים לקולבקים שה-App מספק.
-    מצפה ל-4 קולבקים:
-      on_current_trip, on_past_trips, on_new_trip, on_ai_chat
+    מחלקה שאחראית על החיבור בין ה־
+    View  
+    של מסך הדשבורד  
+    לבין הלוגיקה של ה־
+    App  
+
+    היא משמשת כ־
+    Presenter  
+    שתפקידו "לתווך" בין הכפתורים שמוצגים למשתמש  
+    לבין הפונקציות (קולבקים) שמבצע ה־
+    App  
+
+    מצפה לקבל ארבעה קולבקים עיקריים:
+    - on_current_trip  → פתיחת טיול נוכחי
+    - on_past_trips    → הצגת רשימת טיולים קודמים
+    - on_new_trip      → יצירת טיול חדש
+    - on_ai_chat       → פתיחת צ'אט עם ה־AI
     """
+
     def __init__(
         self,
-        view,
-        session_manager,
-        on_current_trip,
-        on_past_trips,
-        on_new_trip,
-        on_ai_chat,
+        view,              # ה־View של הדשבורד (המסך עצמו עם הכפתורים)
+        session_manager,   # אובייקט שמנהל את מצב ההתחברות (Session)
+        on_current_trip,   # פונקציה שנטענת מבחוץ ומטפלת בלחיצה על כפתור "טיול נוכחי"
+        on_past_trips,     # פונקציה שנטענת מבחוץ ומטפלת בלחיצה על כפתור "טיולים קודמים"
+        on_new_trip,       # פונקציה שנטענת מבחוץ ומטפלת בלחיצה על כפתור "טיול חדש"
+        on_ai_chat,        # פונקציה שנטענת מבחוץ ומטפלת בלחיצה על כפתור "צ'אט AI"
     ):
+        # שמירת ה־View
         self.view = view
+        # שמירת מנהל הסשן (משמש כדי לדעת מי המשתמש המחובר כרגע)
         self.session = session_manager
 
-        # חיבור הכפתורים לקולבקים
+        # חיבור הכפתורים ב־View לפונקציות (קולבקים) שהועברו מה־App
         self.view.current_trip_btn.clicked.connect(on_current_trip)
         self.view.past_trips_btn.clicked.connect(on_past_trips)
         self.view.new_trip_btn.clicked.connect(on_new_trip)

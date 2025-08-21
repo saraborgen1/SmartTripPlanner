@@ -4,9 +4,12 @@ from server.api.user_routes import router as user_router
 from server.api.opentrip import router as trip_router
 from server.api.ai import router as ai_router
 from server.api.weather import router as weather_router
-# from server.api.sites import router as sites_router
+from server.api.opentrip import router as opentrip_router
+
 
 app = FastAPI(title="Smart Trip API")
+app.include_router(opentrip_router)
+
 
 # חיבור ה־routers
 app.include_router(user_router)
