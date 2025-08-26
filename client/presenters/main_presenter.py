@@ -43,3 +43,4 @@ class MainPresenter:
 
         # חיבור הכפתור LOGIN לפונקציה חיצונית
         self.view.auth_button.clicked.connect(self._go_to_auth)
+

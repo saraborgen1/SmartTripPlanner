@@ -615,7 +615,7 @@ class NewTripView(QWidget):
             main_layout.addWidget(back_btn, alignment=Qt.AlignLeft)
 
         # כפתור AI
-        add_ai_button(main_layout, lambda: self._ai_callback and self._ai_callback())
+        # add_ai_button(main_layout, lambda: self._ai_callback and self._ai_callback())
 
         # תפריט ניווט
         nav_layout = QHBoxLayout()

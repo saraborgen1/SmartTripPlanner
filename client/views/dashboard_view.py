@@ -138,6 +138,7 @@ class DashboardView(QWidget):
                 color: #ffffff; 
                 font-size: 28px; 
                 font-weight: 700;
+                background-color: rgba(255, 255, 255, 0.1);
                 padding: 30px 20px 10px 20px;
                 letter-spacing: -0.5px;
             }
@@ -146,6 +147,7 @@ class DashboardView(QWidget):
                 color: #a0aec0; 
                 font-size: 14px; 
                 font-weight: 400;
+                background-color: rgba(255, 255, 255, 0.1);
                 padding: 0 20px 30px 20px;
                 letter-spacing: 0.5px;
             }
@@ -244,7 +246,7 @@ class DashboardView(QWidget):
         sidebar_layout.addWidget(brand_title)
         
         # תת-כותרת
-        brand_subtitle = QLabel("PLANNER")
+        brand_subtitle = QLabel("PLANNER✈️")
         brand_subtitle.setObjectName("brand_subtitle")
         brand_subtitle.setAlignment(Qt.AlignCenter)
         sidebar_layout.addWidget(brand_subtitle)
