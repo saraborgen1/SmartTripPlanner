@@ -53,32 +53,34 @@ def create_trip(trip: trip.Trip):
     # מחזירים את האובייקט trip עם התחזית שנשמרה, כתגובה ללקוח
     return trip
 
-# פונקציה זו מחזירה את כל הטיולים של משתמש מסוים מתוך מסד הנתונים
 def get_user_trips(username: str):
-    # התחברות למסד הנתונים
     conn = db_config.get_connection()
     cursor = conn.cursor()
+    try:
+        print(f"DEBUG - Fetching trips for: {username}")  # 🟢
 
-    # שאילתת SELECT – שליפת כל הטיולים של המשתמש
-    cursor.execute("SELECT * FROM trips WHERE username = ?", (username,))
-    rows = cursor.fetchall()  # רשימת כל השורות שהתקבלו
-    columns = [column[0] for column in cursor.description]  # שמות העמודות
+        query = "SELECT * FROM trips WHERE username = ?"
+        print(f"DEBUG - Running query: {query} with param: {username}")  # 🟢
 
-    trips = []  # רשימת תוצאה שתכיל את כל הטיולים של המשתמש
+        cursor.execute(query, (username,))
+        rows = cursor.fetchall()
+        print(f"DEBUG - Got {len(rows)} rows from DB")  # 🟢
 
-    # עיבוד כל שורה והמרתה למילון נוח לשימוש
-    for row in rows:
-        trip_dict = dict(zip(columns, row))  # התאמת שמות עמודות לערכים
+        columns = [column[0] for column in cursor.description]
+        trips = []
 
-        # המרה חזרה של שדות הרשימות
-        trip_dict["selected_sites"] = trip_dict["selected_sites"].split(",") if trip_dict["selected_sites"] else []
-        trip_dict["transport"] = trip_dict["transport"].split(",") if trip_dict["transport"] else []
+        for row in rows:
+            trip_dict = dict(zip(columns, row))
+            trip_dict["selected_sites"] = trip_dict["selected_sites"].split(",") if trip_dict["selected_sites"] else []
+            trip_dict["transport"] = trip_dict["transport"].split(",") if trip_dict["transport"] else []
+            trips.append(trip_dict)
 
-        trips.append(trip_dict)
+        return trips
 
-    # סגירת הקשר למסד הנתונים
-    cursor.close()
-    conn.close()
+    except Exception as e:
+        print(f"❌ ERROR in get_user_trips: {e}")  # 🟢 נבין מה נופל
+        raise
+    finally:
+        cursor.close()
+        conn.close()
 
-    # החזרת רשימת הטיולים בפורמט של רשימת מילונים
-    return trips

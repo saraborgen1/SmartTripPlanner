@@ -49,19 +49,24 @@ class TripDetailView(QWidget):
 
         # --- מצב 2: טיול מהמסד ---
         elif is_db_trip:
-            dest       = data.get("destination", "Unknown")
-            start_date = data.get("start_date", "")
-            end_date   = data.get("end_date", "")
-            sites      = data.get("selected_sites") or []
-            transport  = data.get("transport") or []
-            notes      = data.get("notes") or ""
-            weather    = data.get("weather") or ""
+            self.setWindowTitle("Trip Details")
 
-            self.setWindowTitle(f"Trip Details: {dest}")
+            from PySide6.QtWidgets import QTextEdit
+            box = QTextEdit()
+            box.setReadOnly(True)
 
-            layout.addWidget(QLabel(f"<b>{dest}</b>"))
-            layout.addWidget(QLabel(f"Dates: {start_date} → {end_date}"))
-            layout.addWidget(QLabel(f"Transport: {', '.join(transport) if transport else 'N/A'}"))
+            lines = []
+            for key, value in data.items():
+                if isinstance(value, list):
+                    value = ", ".join(str(v) for v in value)
+                elif isinstance(value, dict):
+                    value = str(value)
+                lines.append(f"{key}: {value}")
+
+            box.setText("\n".join(lines))
+            layout.addWidget(box)
+
+
 
             layout.addWidget(QLabel("Selected Sites:"))
             sites_box = QTextEdit()

@@ -1,74 +1,3 @@
-# # client/views/dashboard_view.py
-
-# from PySide6.QtWidgets import QWidget, QVBoxLayout, QPushButton, QLabel
-# from PySide6.QtCore import Qt
-# from client.utils.ai_button import add_ai_button
-
-
-# class DashboardView(QWidget):
-#     """
-#     מחלקת View שמציגה את מסך ה־
-#     Dashboard
-
-#     תפקידה:
-#     - להראות כפתורים עיקריים:
-#       Current trip,
-#       Past trips,
-#       New trip,
-#       AI Assistant
-#     - להציג כותרת מותאמת אישית עם שם המשתמש המחובר.
-#     """
-
-#     def __init__(self):
-#         super().__init__()
-#         self.setWindowTitle("Smart Trip Planner - Dashboard")
-#         self.setMinimumSize(500, 360)
-
-#         # Layout ראשי אנכי
-#         # QVBoxLayout
-#         layout = QVBoxLayout()
-
-#         # כותרת ברוכים הבאים
-#         # QLabel
-#         self.title = QLabel("Welcome")
-#         self.title.setAlignment(Qt.AlignCenter)
-#         self.title.setStyleSheet("font-size: 20px; font-weight: bold;")
-#         layout.addWidget(self.title)
-
-#         # כפתורים עיקריים
-#         # QPushButton
-#         self.current_trip_btn = QPushButton("Current trip")
-#         self.past_trips_btn   = QPushButton("Past trips")
-#         self.new_trip_btn     = QPushButton("New trip")
-#         self.ai_btn           = QPushButton("AI Assistant")
-
-#         # הוספת הכפתורים ל־Layout
-#         layout.addWidget(self.current_trip_btn)
-#         layout.addWidget(self.past_trips_btn)
-#         layout.addWidget(self.new_trip_btn)
-#         layout.addWidget(self.ai_btn)
-
-#         # חיבור ה־Layout למסך
-#         self.setLayout(layout)
-
-#     def set_username(self, username: str):
-#         """
-#         עדכון הכותרת עם שם המשתמש המחובר.
-
-#         username –
-#         str
-#         שם המשתמש.
-#         """
-#         self.title.setText(f"Welcome, {username}")
-
-#     def set_ai_callback(self, cb):
-#         """
-#         שמירה של פונקציית callback
-#         שתופעל כאשר לוחצים על כפתור ה־
-#         AI Assistant
-#         """
-#         self._ai_callback = cb
-
 
 from PySide6.QtWidgets import (
     QWidget, QHBoxLayout, QVBoxLayout, QPushButton, QLabel,
@@ -307,7 +236,7 @@ class DashboardView(QWidget):
         main_layout = QVBoxLayout(main_frame)
         main_layout.setContentsMargins(32, 32, 32, 32)
         main_layout.setSpacing(20)
-        
+
         # כותרת דף דינמית
         self.page_title = QLabel("Current Trip")
         self.page_title.setStyleSheet("""
@@ -318,7 +247,7 @@ class DashboardView(QWidget):
             letter-spacing: -0.5px;
         """)
         main_layout.addWidget(self.page_title)
-        
+
         # תת-כותרת דף
         self.page_subtitle = QLabel("Manage your current travel plans")
         self.page_subtitle.setStyleSheet("""
@@ -327,7 +256,7 @@ class DashboardView(QWidget):
             margin-bottom: 20px;
         """)
         main_layout.addWidget(self.page_subtitle)
-        
+
         # קו מפריד
         divider = QFrame()
         divider.setFrameShape(QFrame.HLine)
@@ -337,7 +266,7 @@ class DashboardView(QWidget):
             margin: 0 0 20px 0;
         """)
         main_layout.addWidget(divider)
-        
+
         # Stack של הדפים
         self.content_stack = QStackedWidget()
         self.content_stack.setStyleSheet("""
@@ -346,19 +275,21 @@ class DashboardView(QWidget):
                 border: none;
             }
         """)
-        
-        # יצירת הדפים
+
+        # יוצרים רק את שני המסכים הראשיים כרגע
         self.pages = {
             "current": CurrentTripView(),
             "past": PastTripsView(),
-            "new": NewTripView(),
+            "new": None  # ייטען דינמית אחרי ההתחברות
         }
-        
-        for page in self.pages.values():
-            self.content_stack.addWidget(page)
-        
+
+        # הוספת הדפים הקיימים ל־stack
+        self.content_stack.addWidget(self.pages["current"])
+        self.content_stack.addWidget(self.pages["past"])
+
         main_layout.addWidget(self.content_stack, stretch=1)
         root_layout.addWidget(main_frame, stretch=1)
+
 
     def create_modern_floating_ai_button(self):
         """יצירת כפתור AI צף מודרני עם אפקטים"""
@@ -377,13 +308,24 @@ class DashboardView(QWidget):
         
         self.ai_button.clicked.connect(self.open_ai_dialog)
         self.position_ai_button()
+        self.ai_button.raise_()
+
+
 
     def position_ai_button(self):
         """מיקום הכפתור הצף"""
         margin = 30
         size = self.ai_button.width()
-        x = self.width() - size - margin
-        y = self.height() - size - margin
+        main_window = self.window()
+        if main_window:
+            # מחשבים לפי הגודל הכולל של החלון
+            x = main_window.width() - size - margin
+            y = main_window.height() - size - margin
+        else:
+            # fallback אם אין MainWindow
+            x = self.width() - size - margin
+            y = self.height() - size - margin
+
         self.ai_button.move(x, y)
         self.ai_button.raise_()
 
@@ -391,32 +333,44 @@ class DashboardView(QWidget):
         """טיפול בשינוי גודל החלון"""
         super().resizeEvent(event)
         self.position_ai_button()
+        self.ai_button.raise_()
+
 
     def select_page(self, page_key):
         """מעבר בין דפים עם אנימציה"""
         if page_key not in self.pages:
             return
-        
+
+        # אם המשתמש בחר New Adventure ועדיין לא יצרנו את המסך — נבנה אותו
+        if page_key == "new" and self.pages["new"] is None:
+            from client.utils.session import SessionManager
+            from client.views.newtrip_view import NewTripView
+            # שולפים את שם המשתמש מסשן
+            session = getattr(self.parentWidget(), "session", None)
+            username = session.username if session else None
+            self.pages["new"] = NewTripView(username=username, session_manager=session)
+            self.content_stack.addWidget(self.pages["new"])
+
         # עדכון כפתורי הניווט
         for key, btn in self.nav_buttons.items():
             btn.setChecked(key == page_key)
-        
+
         # עדכון כותרות הדף
         page_titles = {
             "current": ("Current Trip", "Manage your current travel plans"),
             "past": ("Trip History", "Review your past adventures"),
             "new": ("New Adventure", "Plan your next amazing journey")
         }
-        
         if page_key in page_titles:
             title, subtitle = page_titles[page_key]
             self.page_title.setText(title)
             self.page_subtitle.setText(subtitle)
-        
+
         # מעבר לדף החדש
         page_index = list(self.pages.keys()).index(page_key)
         self.content_stack.setCurrentIndex(page_index)
         self.current_page = page_key
+
 
     def set_username(self, username: str):
         """עדכון שם המשתמש"""
@@ -446,3 +400,5 @@ class DashboardView(QWidget):
         layout.addWidget(ai_view)
         
         dialog.exec()
+
+    

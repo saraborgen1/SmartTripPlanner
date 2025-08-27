@@ -23,7 +23,7 @@ from client.utils.constants import BASE_URL
 _session = requests.Session()
 
 # זמן קצוב ברירת מחדל לבקשות (בשניות)
-DEFAULT_TIMEOUT = 15
+DEFAULT_TIMEOUT = 30
 # זמן מיוחד עבור קריאות ל־AI (ארוך יותר כי עיבוד עשוי לקחת זמן)
 AI_TIMEOUT = 90
 
@@ -63,7 +63,7 @@ def register(username: str, password: str) -> Dict[str, Any]:
     return r.json()
 
 
-def get_sites(city: str, address: str, profile: str = "driving-car", limit: int = 10) -> List[Dict[str, Any]]:
+def get_sites(city: str, address: str, profile: str = "driving-car", limit: int = 8) -> List[Dict[str, Any]]:
     """
     שליפת אתרים / נקודות עניין בעיר מסוימת.
     שולח בקשת 
@@ -87,26 +87,29 @@ def get_sites(city: str, address: str, profile: str = "driving-car", limit: int 
     return r.json()
 
 
-def create_trip(trip: Dict[str, Any]) -> Dict[str, Any]:
+def create_trip(trip: Dict[str, Any], token: str | None = None) -> Dict[str, Any]:
     """
-    יצירת טיול חדש:
-    שולח בקשת 
-    POST
-    לנתיב /create_trip עם גוף בקשה בפורמט 
-    JSON.
-    
-    הפרמטר trip חייב לכלול:
-    - username
-    - destination
-    - start_date
-    - end_date
-    - selected_sites
-    - transport
-    - notes
+    יצירת טיול חדש עם אימות משתמש:
+    שולח בקשת POST לנתיב /create_trip עם גוף JSON.
+    כולל כותרת Authorization עם ה-Token.
     """
-    r = _session.post(f"{BASE_URL}/create_trip", json=trip, timeout=DEFAULT_TIMEOUT)
+    if not token:
+        raise ValueError("User is not logged in. Cannot create a trip.")
+
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "Content-Type": "application/json"
+    }
+
+    r = _session.post(
+        f"{BASE_URL}/create_trip",
+        json=trip,
+        headers=headers,
+        timeout=DEFAULT_TIMEOUT
+    )
     r.raise_for_status()
     return r.json()
+
 
 
 def get_my_trips(username: str) -> List[Dict[str, Any]]:
