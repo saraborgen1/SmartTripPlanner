@@ -1,15 +1,35 @@
-# מייבא את ספריית requests לשליחת בקשות HTTP ל־API חיצוני
+#server/services/weather_service.py
+
+# הקובץ הזה מגדיר את שכבת השירות (Service Layer)
+# שאחראית על שליפת תחזית מזג אוויר משירות חיצוני –
+# weatherapi.com
+#
+# הוא משתמש בספריית
+# requests
+# כדי לשלוח בקשות
+# HTTP
+# לשרת חיצוני ולקבל ממנו נתוני מזג אוויר.
 import requests
 
-# מפתח API לאתר weatherapi.com (מומלץ לשמור כמשתנה סביבה לצורכי אבטחה)
+# מפתח
+# API
+# לשירות
+# weatherapi.com
 WEATHER_API_KEY = "acecc3119b344218b41132502250107"
 
 # פונקציה שמחזירה תחזית מזג אוויר ל־7 ימים לעיר מסוימת
 def get_weather_forecast(city_name: str):
-    # כתובת ה־API של weatherapi שמחזיר תחזית
+    # כתובת ה־
+    # API
+    # של
+    # weatherapi
+    # שמחזירה תחזית מזג אוויר
     url = "http://api.weatherapi.com/v1/forecast.json"
 
-    # פרמטרים שישלחו ב־GET request ל־API
+    # פרמטרים שנשלחים בבקשת
+    # GET
+    # אל ה־
+    # API
     params = {
         "key": WEATHER_API_KEY,   # מפתח API
         "q": city_name,           # שם העיר הרצויה
@@ -18,16 +38,20 @@ def get_weather_forecast(city_name: str):
         "alerts": "no"            # ללא התראות מזג אוויר
     }
 
-    # שליחת בקשת GET לשרת עם הפרמטרים
+    # שליחת בקשת
+    # GET
+    # לשרת עם הפרמטרים
     response = requests.get(url, params=params)
 
     # אם הבקשה נכשלה – מדפיסים שגיאה ומחזירים הודעת שגיאה
     if response.status_code != 200:
-        print(f"שגיאה בקבלת נתונים: {response.status_code}")
+        print(f"Error fetching data: {response.status_code}")
         print(response.text)
-        return {"error": "שגיאה בקבלת נתוני מזג האוויר."}
+        return {"error": "Failed to fetch weather data."}
 
-    # המרת תגובת JSON למבנה נתונים בפייתון
+    # המרת התשובה מסוג
+    # JSON
+    # למבנה נתונים בפייתון (dictionary)
     data = response.json()
 
     # רשימה שתכיל את התחזית היומית לכל יום
@@ -39,7 +63,11 @@ def get_weather_forecast(city_name: str):
             "temp_max": day["day"]["maxtemp_c"]      # טמפרטורה מקסימלית
         })
 
-    # מחזיר את שם היעד ורשימת התחזיות לכל אחד מהימים
+    # הפונקציה מחזירה מילון 
+    # (dictionary) 
+    # עם:
+    # destination – שם היעד (העיר)
+    # forecast – רשימת תחזיות לכל יום
     return {
         "destination": city_name,
         "forecast": forecast

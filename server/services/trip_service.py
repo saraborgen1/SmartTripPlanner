@@ -1,35 +1,52 @@
 # server/services/trip_service.py
+# הקובץ הזה מגדיר את שכבת ה"שירות" 
+# (Service Layer)
+# שאחראית על כל הפעולות שקשורות לטיולים מול מסד הנתונים
+# SQL
+# כולל יצירה, שליפה, ועדכון טיולים.
+# הוא משתמש במודל
+# Trip
+# שמוגדר בקובץ models/trip.py
+# ובפונקציה לחיבור למסד הנתונים שמוגדרת בקובץ
+# db_config
+# וכן בשירות חיצוני שמחזיר תחזית מזג אוויר.
 # מייבא את המודלים וההגדרות הדרושים
 from server.models import trip                      # מודל Trip שמייצג טיול
 from server.database import db_config               # פונקציה לקבלת חיבור למסד הנתונים
 from server.services.weather_service import get_weather_forecast  # פונקציה לקבלת תחזית מזג אוויר
 
-# פונקציה זו שומרת טיול חדש למסד הנתונים SQL
+# פונקציה זו יוצרת טיול חדש ושומרת אותו במסד הנתונים
+# SQL
 def create_trip(trip: trip.Trip):
-    # התחברות למסד הנתונים
+    # יצירת חיבור למסד הנתונים
     conn = db_config.get_connection()
     cursor = conn.cursor()
 
-    # המרה של שדות רשימה (selected_sites ו־transport) למחרוזת אחת מופרדת בפסיקים
-    # לדוגמה: ["מוזיאון", "פארק"] -> "מוזיאון,פארק"
+    # המרה של שדות מסוג רשימה למחרוזות:
+    # selected_sites
+    # transport
+    # לדוגמה:
+    # ["Museum", "Park"] -> "Museum,Park"
     selected_sites_str = ",".join(trip.selected_sites)
-    transport_str = ",".join(trip.transport or [])  # אם transport ריק, נשתמש ברשימה ריקה
+    transport_str = ",".join(trip.transport or [])  
 
-    # שליפת תחזית מזג האוויר מלאה ל־7 ימים באמצעות השירות
+    # שליפת תחזית מזג אוויר לשבעה ימים קדימה
     weather_data = get_weather_forecast(trip.destination)
 
-    # המרה של רשימת התחזיות למחרוזת אחת מפורמטת לשמירה במסד הנתונים
+    # המרה של תחזית מזג האוויר למחרוזת אחת מסודרת
     if "forecast" in weather_data:
-        # בניית מחרוזת הכוללת כל יום עם הטמפ' המינימלית והמקסימלית
+        # יצירת מחרוזת שכוללת את התאריך וטווח הטמפרטורות לכל יום
         forecast_str = "; ".join(
             f"{day['date']}: {day['temp_min']}°C - {day['temp_max']}°C"
             for day in weather_data["forecast"]
         )
-        trip.weather = forecast_str  # שמירת התחזית בשדה weather של הטיול
+        trip.weather = forecast_str  
     else:
-        trip.weather = "No forecast available"  # במקרה של שגיאה או חוסר נתונים
+        trip.weather = "No forecast available"
 
-    # ביצוע שאילתת INSERT – הכנסת כל נתוני הטיול לטבלת trips במסד הנתונים
+    # הכנסת נתוני הטיול לטבלה
+    # trips
+    # במסד הנתונים    
     cursor.execute("""
         INSERT INTO trips (
             username, destination, start_date, end_date,
@@ -51,48 +68,21 @@ def create_trip(trip: trip.Trip):
     cursor.close()
     conn.close()
 
-    # מחזירים את האובייקט trip עם התחזית שנשמרה, כתגובה ללקוח
+    # מחזירים את אובייקט הטיול עם התחזית שנשמרה
     return trip
 
-def get_user_trips(username: str):
-    conn = db_config.get_connection()
-    cursor = conn.cursor()
-    try:
-
-        query = "SELECT * FROM trips WHERE username = ?"
-
-        cursor.execute(query, (username,))
-        rows = cursor.fetchall()
-
-        columns = [column[0] for column in cursor.description]
-        trips = []
-
-        for row in rows:
-            trip_dict = dict(zip(columns, row))
-            trip_dict["selected_sites"] = trip_dict["selected_sites"].split(",") if trip_dict["selected_sites"] else []
-            trip_dict["transport"] = trip_dict["transport"].split(",") if trip_dict["transport"] else []
-            trips.append(trip_dict)
-
-        return trips
-
-    except Exception as e:
-        print(f"❌ ERROR in get_user_trips: {e}")  # 🟢 נבין מה נופל
-        raise
-    finally:
-        cursor.close()
-        conn.close()
-
-
+# פונקציה זו מעדכנת טיול קיים לפי מזהה
+# id
 def update_trip(trip_id: int, updated_trip: trip.Trip):
     conn = db_config.get_connection()
     cursor = conn.cursor()
 
     try:
-        # המרת רשימות למחרוזות
+        # המרת רשימות למחרוזות לשמירה במסד הנתונים
         selected_sites_str = ",".join(updated_trip.selected_sites or [])
         transport_str = ",".join(updated_trip.transport or [])
 
-        # תחזית מזג אוויר
+        # עדכון תחזית מזג אוויר
         weather_data = get_weather_forecast(updated_trip.destination)
         if "forecast" in weather_data:
             forecast_str = "; ".join(
@@ -103,7 +93,10 @@ def update_trip(trip_id: int, updated_trip: trip.Trip):
         else:
             updated_trip.weather = "No forecast available"
 
-        # עדכון השדות בטבלת trips
+        # ביצוע שאילתת
+        # UPDATE
+        # בטבלה
+        # trips
         cursor.execute("""
             UPDATE trips
             SET destination = ?, start_date = ?, end_date = ?,
@@ -127,8 +120,50 @@ def update_trip(trip_id: int, updated_trip: trip.Trip):
         return {"message": "Trip updated successfully", "trip_id": trip_id}
 
     except Exception as e:
+            # במקרה של שגיאה – ביטול השינויים 
+            # (Rollback)
         conn.rollback()
         raise e
     finally:
         cursor.close()
         conn.close()
+
+# פונקציה זו מחזירה את כל הטיולים של משתמש לפי שם המשתמש
+def get_user_trips(username: str):
+    conn = db_config.get_connection()
+    cursor = conn.cursor()
+    try:
+
+        query = "SELECT * FROM trips WHERE username = ?"
+
+        cursor.execute(query, (username,))
+        rows = cursor.fetchall()
+
+        # שמות העמודות בטבלה
+        columns = [column[0] for column in cursor.description]
+        trips = []
+
+        # יצירת רשימת מילונים 
+        # (dict)
+        #  שכל אחד מייצג טיול
+        for row in rows:
+            # המרה של שדות שנשמרו כמחרוזות חזרה לרשימות
+            trip_dict = dict(zip(columns, row))
+            trip_dict["selected_sites"] = (
+                trip_dict["selected_sites"].split(",")
+                if trip_dict["selected_sites"] else []
+            )
+            trip_dict["transport"] = trip_dict["transport"].split(",") if trip_dict["transport"] else []
+            trips.append(trip_dict)
+
+        return trips
+
+    except Exception as e:
+        # הדפסת שגיאה אם משהו נכשל
+        print(f"❌ ERROR in get_user_trips: {e}") 
+        raise
+    finally:
+        cursor.close()
+        conn.close()
+
+

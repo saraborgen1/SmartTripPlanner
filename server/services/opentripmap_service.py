@@ -1,11 +1,33 @@
 # services/opentripmap_service.py
+# הקובץ הזה מהווה את שכבת ה"שירות"
+# (Service Layer)
+# שמבצעת את הלוגיקה מול
+# APIs
+# חיצוניים:
+# OpenTripMap
+# ו־
+# OpenRouteService
+#
+# המטרה היא לאפשר קבלת אתרים 
+# (POI – Points of Interest) 
+# בעיר נתונה,
+# פרטי אתרים (כולל תמונות ותיאורים),
+# וכן חישוב מסלול 
+# (Route) 
+# מנקודת ההתחלה של המשתמש אל אתרים אלו.
 import requests
 
+# מפתחות גישה לשירותים החיצוניים:
+# OpenTripMap
+# ו־
+# OpenRouteService
 OPENTRIPMAP_API_KEY = "5ae2e3f221c38a28845f05b6b33b5e6712dcb459cd56890412563af3"
 OPENROUTESERVICE_API_KEY = "5b3ce3597851110001cf62489fc3a4ec2b704508ab748117d9ecd490"
 
-
-# פונקציה זו ממירה כתובת (כמו רחוב ומספר) לקואורדינטות (קו אורך ורוחב)
+# פונקציה זו ממירה כתובת טקסטואלית (כמו רחוב ומספר) לקואורדינטות
+# (קו אורך – Longitude, קו רוחב – Latitude)
+# באמצעות
+# OpenRouteService
 def geocode_address(address: str):
     try:
         url = "https://api.openrouteservice.org/geocode/search"
@@ -19,21 +41,27 @@ def geocode_address(address: str):
 
         features = data.get("features", [])
         if not features:
-            return {"error": "לא נמצאו קואורדינטות לכתובת שסופקה"}
+            # במקרה שלא נמצאו תוצאות מתאימות לכתובת שסופקה
+            return {"error": "No coordinates found for the provided address"}
 
         coords = features[0]["geometry"]["coordinates"]  # [lon, lat]
         return (coords[0], coords[1])
     except Exception as e:
+        # במקרה של כשל בתקשורת או פרשנות נתונים
         return {"error": str(e)}
 
-
-# פונקציה שמביאה מידע מפורט על אתר לפי XID
+# פונקציה זו מביאה מידע מפורט על אתר מסוים לפי מזהה ייחודי
+# XID
+# שירות
+# OpenTripMap
+# מאפשר גישה לפרטים נוספים על כל אתר
 def get_place_details(xid: str):
     try:
         url = f"https://api.opentripmap.com/0.1/en/places/xid/{xid}"
         resp = requests.get(url, params={"apikey": OPENTRIPMAP_API_KEY})
         data = resp.json()
 
+        # ניסיון להביא כתובת של תמונה מקדימה אם קיימת
         image_url = data.get("preview", {}).get("source")
         image_info = None
         if image_url:
@@ -52,9 +80,11 @@ def get_place_details(xid: str):
     except Exception:
         return {}
 
-
 # פונקציה זו מחפשת אתרים בעיר נתונה ומחזירה רשימה של אתרים עם פרטים בסיסיים
-def get_places_in_city(city_name: str, limit: int = 20):  # ברירת מחדל 50 תוצאות
+# מתבצע שימוש ב־
+# OpenTripMap
+# תחילה כדי לקבל קואורדינטות של העיר, ואז מבוצעת שאילתת אתרים ברדיוס מוגדר
+def get_places_in_city(city_name: str, limit: int = 20):  
     try:
         geoname_url = "https://api.opentripmap.com/0.1/en/places/geoname"
         geo_resp = requests.get(geoname_url, params={"name": city_name, "apikey": OPENTRIPMAP_API_KEY})
@@ -68,7 +98,7 @@ def get_places_in_city(city_name: str, limit: int = 20):  # ברירת מחדל 
         places_url = "https://api.opentripmap.com/0.1/en/places/radius"
         places_params = {
             "apikey": OPENTRIPMAP_API_KEY,
-            "radius": 10000,
+            "radius": 10000, # רדיוס חיפוש במטרים (10 ק"מ)
             "lon": lon,
             "lat": lat,
             "limit": limit,
@@ -80,7 +110,7 @@ def get_places_in_city(city_name: str, limit: int = 20):  # ברירת מחדל 
 
         cleaned_places = []
         for place in raw_places:
-        # מדלגים על אתרים בלי שם
+            # מדלגים על אתרים שאין להם שם
             if not place.get("name"):
                 continue
 
@@ -96,8 +126,10 @@ def get_places_in_city(city_name: str, limit: int = 20):  # ברירת מחדל 
     except Exception as e:
         return {"error": str(e)}
 
-
-# פונקציה זו מחזירה מסלול בין שתי נקודות
+# פונקציה זו מחשבת מסלול בין שתי נקודות –
+# נקודת התחלה (start_coords)
+# ונקודת יעד (end_coords)
+# בהתאם לסוג התחבורה (profile)
 def get_route(start_coords: tuple, end_coords: tuple, profile: str = "driving-car"):
     try:
         url = f"https://api.openrouteservice.org/v2/directions/{profile}"
@@ -111,17 +143,25 @@ def get_route(start_coords: tuple, end_coords: tuple, profile: str = "driving-ca
     except Exception as e:
         return {"error": str(e)}
 
-
-# הפונקציה הראשית – מחזירה אתרים בעיר עם מסלולים אליהם
-def get_sites_with_routes(city_name: str, start_address: str, profile: str = "driving-car", limit: int = 20):
+# הפונקציה הראשית –
+# get_sites_with_routes
+# היא משלבת את כל הפונקציות הקודמות כדי להחזיר למשתמש:
+# רשימת אתרים בעיר נתונה, כולל פרטים מורחבים עליהם,
+# יחד עם מסלול הגעה מנקודת ההתחלה שסופקה
+def get_sites_with_routes(city_name: str, start_address: str,
+                           profile: str = "driving-car", limit: int = 20):
+    
+    # המרת הכתובת לקואורדינטות
     start_coords = geocode_address(start_address)
     if isinstance(start_coords, dict) and "error" in start_coords:
         return start_coords
 
+    # קבלת רשימת אתרים בעיר
     places = get_places_in_city(city_name, limit)
     if isinstance(places, dict) and "error" in places:
         return places
 
+    # ווידוא שהעיר עצמה מחזירה קואורדינטות תקינות
     geoname_url = "https://api.opentripmap.com/0.1/en/places/geoname"
     geo_resp = requests.get(geoname_url, params={"name": city_name, "apikey": OPENTRIPMAP_API_KEY})
     geo_data = geo_resp.json()
@@ -129,15 +169,18 @@ def get_sites_with_routes(city_name: str, start_address: str, profile: str = "dr
     city_lon = geo_data.get("lon")
 
     if not city_lat or not city_lon:
-        return {"error": f"לא ניתן לחשב מסלול עבור {city_name}"}
+        return {"error": f"Cannot calculate route for {city_name}"}
 
     enriched_places = []
     for place in places:
+        # קבלת פרטים נוספים על כל אתר
         details = get_place_details(place["xid"]) if place.get("xid") else {}
 
-        end_coords = (city_lon, city_lat)  # כרגע למסלול – מרכז העיר
+        # כרגע מחושבת דרך לנקודת יעד מרכזית בעיר (למשל מרכז העיר)
+        end_coords = (city_lon, city_lat)  
         route = get_route(start_coords, end_coords, profile)
 
+        # יוצרים מבנה נתונים מאורגן עם פרטי האתר והמסלול אליו
         enriched_places.append({
             "place": {
                 "name": place["name"],
