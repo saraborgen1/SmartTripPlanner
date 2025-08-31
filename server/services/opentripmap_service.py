@@ -33,9 +33,20 @@ def get_place_details(xid: str):
         url = f"https://api.opentripmap.com/0.1/en/places/xid/{xid}"
         resp = requests.get(url, params={"apikey": OPENTRIPMAP_API_KEY})
         data = resp.json()
+
+        image_url = data.get("preview", {}).get("source")
+        image_info = None
+        if image_url:
+            headers = {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                              "AppleWebKit/537.36 (KHTML, like Gecko) "
+                              "Chrome/120.0.0.0 Safari/537.36"
+            }
+            image_info = {"url": image_url, "headers": headers}
+
         return {
             "rating": data.get("rate"),
-            "image": data.get("preview", {}).get("source"),
+            "image": image_info,
             "description": data.get("wikipedia_extracts", {}).get("text", "")
         }
     except Exception:
