@@ -1,3 +1,4 @@
+# server/services/trip_service.py
 # מייבא את המודלים וההגדרות הדרושים
 from server.models import trip                      # מודל Trip שמייצג טיול
 from server.database import db_config               # פונקציה לקבלת חיבור למסד הנתונים
@@ -57,14 +58,11 @@ def get_user_trips(username: str):
     conn = db_config.get_connection()
     cursor = conn.cursor()
     try:
-        print(f"DEBUG - Fetching trips for: {username}")  # 🟢
 
         query = "SELECT * FROM trips WHERE username = ?"
-        print(f"DEBUG - Running query: {query} with param: {username}")  # 🟢
 
         cursor.execute(query, (username,))
         rows = cursor.fetchall()
-        print(f"DEBUG - Got {len(rows)} rows from DB")  # 🟢
 
         columns = [column[0] for column in cursor.description]
         trips = []
@@ -84,3 +82,53 @@ def get_user_trips(username: str):
         cursor.close()
         conn.close()
 
+
+def update_trip(trip_id: int, updated_trip: trip.Trip):
+    conn = db_config.get_connection()
+    cursor = conn.cursor()
+
+    try:
+        # המרת רשימות למחרוזות
+        selected_sites_str = ",".join(updated_trip.selected_sites or [])
+        transport_str = ",".join(updated_trip.transport or [])
+
+        # תחזית מזג אוויר
+        weather_data = get_weather_forecast(updated_trip.destination)
+        if "forecast" in weather_data:
+            forecast_str = "; ".join(
+                f"{day['date']}: {day['temp_min']}°C - {day['temp_max']}°C"
+                for day in weather_data["forecast"]
+            )
+            updated_trip.weather = forecast_str
+        else:
+            updated_trip.weather = "No forecast available"
+
+        # עדכון השדות בטבלת trips
+        cursor.execute("""
+            UPDATE trips
+            SET destination = ?, start_date = ?, end_date = ?,
+                selected_sites = ?, transport = ?, notes = ?, weather = ?
+            WHERE id = ?
+        """, (
+            updated_trip.destination,
+            updated_trip.start_date,
+            updated_trip.end_date,
+            selected_sites_str,
+            transport_str,
+            updated_trip.notes,
+            updated_trip.weather,
+            trip_id
+        ))
+
+        conn.commit()
+        if cursor.rowcount == 0:
+            return {"error": "Trip not found"}
+
+        return {"message": "Trip updated successfully", "trip_id": trip_id}
+
+    except Exception as e:
+        conn.rollback()
+        raise e
+    finally:
+        cursor.close()
+        conn.close()

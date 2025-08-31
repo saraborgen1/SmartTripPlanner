@@ -38,7 +38,6 @@ class PastTripsPresenter:
         try:
             # בקשה לשרת לקבלת הטיולים של המשתמש
             trips: List[Dict] = api_client.get_my_trips(username)
-            print("DEBUG - trips from API:", trips)  # לעקוב אחרי מה שמוחזר
         except requests.RequestException as e:
             QMessageBox.critical(self.view, "Error", f"Failed to fetch trips: {e}")
             return

@@ -6,7 +6,7 @@ from PySide6.QtWidgets import (
     QStackedWidget, QScrollArea, QFrame, QGridLayout, QSizePolicy, QDialog
 )
 from PySide6.QtCore import QDate, Qt, QSize
-from PySide6.QtGui import QPixmap, QFont, QPalette
+from PySide6.QtGui import QPixmap, QFont, QPalette, QIcon
 
 from client.presenters.newtrip_presenter import NewTripPresenter
 from client.utils.ai_button import add_ai_button
@@ -108,25 +108,25 @@ class SiteCard(QFrame):
         main_layout.addLayout(text_layout, stretch=1)
         
         # כפתור הוספה (מימין)
-        add_btn = QPushButton("➕")
-        add_btn.setFixedSize(40, 40)
-        add_btn.setStyleSheet("""
+     
+        self.add_btn = QPushButton(self)
+        self.add_btn.setIcon(QIcon("client/assets/plus.png"))  # פלוס מתוך הקובץ המקומי
+        self.add_btn.setIconSize(QSize(24, 24))
+        self.add_btn.setFixedSize(40, 40)
+        self.add_btn.setStyleSheet("""
             QPushButton {
                 border-radius: 20px;
-                background-color: #48bb78;
-                color: white;
-                font-size: 16px;
-                font-weight: bold;
+                background-color: #7C3AED;
             }
             QPushButton:hover {
-                background-color: #38a169;
-            }
-            QPushButton:pressed {
-                background-color: #2f855a;
+                background-color: #6D28D9;
             }
         """)
-        add_btn.clicked.connect(self._add_to_list)
-        main_layout.addWidget(add_btn, alignment=Qt.AlignCenter)
+
+
+        self.add_btn.clicked.connect(self._toggle_site)
+        main_layout.addWidget(self.add_btn, 0, Qt.AlignRight | Qt.AlignVCenter)
+
         
         # טעינת תמונה
         self._load_image()
@@ -136,8 +136,7 @@ class SiteCard(QFrame):
         place = self.site_data.get("place", {})
         image_url = place.get("image")
 
-        # הדפסה דיבאגית לראות מה חוזר מהשרת
-        print(f"[DEBUG] image_url for site '{place.get('name', 'Unknown')}' = {image_url}")
+
 
         # אם אין תמונה בכלל → ברירת מחדל
         if not image_url:
@@ -178,24 +177,46 @@ class SiteCard(QFrame):
             self.image_label.setText("📷")
 
     
-    def _add_to_list(self):
-        """הוספה לרשימת האטרקציות"""
+    def _toggle_site(self):
         place = self.site_data.get("place", {})
         name = place.get("name", "Unnamed Site")
-        self.parent_view.add_site_to_my_list(name)
-        
-        # אנימציה קטנה - שינוי צבע הכפתור
-        btn = self.sender()
-        btn.setText("✓")
-        btn.setStyleSheet("""
-            QPushButton {
-                border-radius: 20px;
-                background-color: #68d391;
-                color: white;
-                font-size: 16px;
-                font-weight: bold;
-            }
-        """)
+
+        if name in [self.parent_view.my_sites_list.item(i).text().replace("📍 ", "") 
+                    for i in range(self.parent_view.my_sites_list.count())]:
+            # אם כבר קיים → נסיר
+            items = self.parent_view.my_sites_list.findItems(f"📍 {name}", Qt.MatchExactly)
+            for item in items:
+                row = self.parent_view.my_sites_list.row(item)
+                self.parent_view.my_sites_list.takeItem(row)
+
+            # חזרה למצב פלוס סגול
+            self.add_btn.setIcon(QIcon("client/assets/plus.png"))
+            self.add_btn.setStyleSheet("""
+                QPushButton {
+                    border-radius: 20px;
+                    background-color: #7C3AED;
+                }
+                QPushButton:hover {
+                    background-color: #6D28D9;
+                }
+            """)
+        else:
+            # מוסיפים לרשימה
+            self.parent_view.add_site_to_my_list(name)
+
+            # מעבר למצב וי ירוק
+            self.add_btn.setIcon(QIcon("client/assets/check.png"))
+            self.add_btn.setStyleSheet("""
+                QPushButton {
+                    border-radius: 20px;
+                    background-color: #10B981;
+                }
+                QPushButton:hover {
+                    background-color: #059669;
+                }
+            """)
+
+
     
     def mousePressEvent(self, event):
         """טיפול בלחיצה על הכרטיס - פתיחת פרטים"""
@@ -294,12 +315,16 @@ class WeatherWidget(QWidget):
 
 
 class NewTripView(QWidget):
-    def __init__(self, username: str | None = None, back_callback=None, session_manager=None):
+    def __init__(self, username: str | None = None, back_callback=None, session_manager=None, on_save_callback=None):
         super().__init__()
         self.username = username
         self.session_manager = session_manager
         self.presenter = NewTripPresenter(self, session_manager)
         self._ai_callback = None
+        self.on_save_callback = on_save_callback  
+        self._back_btn = None   # נשמור כאן את הכפתור כדי שנוכל לשנות אותו אחר כך
+
+
 
         self.setWindowTitle("Create New Trip")
         self.setStyleSheet("""
@@ -364,9 +389,9 @@ class NewTripView(QWidget):
 
         # כפתור Back (אם קיים)
         if back_callback:
-            back_btn = QPushButton("← Back")
-            back_btn.clicked.connect(back_callback)
-            back_btn.setStyleSheet("""
+            self._back_btn = QPushButton("← Back")
+            self._back_btn.clicked.connect(lambda: self._handle_back(back_callback))
+            self._back_btn.setStyleSheet("""
                 QPushButton {
                     background-color: #e2e8f0;
                     color: #4a5568;
@@ -378,7 +403,8 @@ class NewTripView(QWidget):
                     background-color: #cbd5e0;
                 }
             """)
-            main_layout.addWidget(back_btn, alignment=Qt.AlignLeft)
+            main_layout.addWidget(self._back_btn, alignment=Qt.AlignLeft)
+
 
         # כפתור AI
         # add_ai_button(main_layout, lambda: self._ai_callback and self._ai_callback())
@@ -428,6 +454,11 @@ class NewTripView(QWidget):
         self.btn_list.clicked.connect(lambda: self.set_page(2))
         
         self.set_page(0)
+
+    def _handle_back(self, callback):
+        """ניקוי טופס וחזרה למסך הקודם"""
+        self.reset_form()   # מנקה את כל מה שהוזן
+        callback()          # מבצע את החזרה
 
     def _create_search_page(self):
         """יצירת עמוד החיפוש"""
@@ -709,17 +740,14 @@ class NewTripView(QWidget):
 
     def on_save_trip(self):
         """שמירת הטיול"""
-        # אם אין שם משתמש גם במסך וגם בסשן → שגיאה
         username = self.username or (
-        self.session_manager.username if self.session_manager else None
+            self.session_manager.username if self.session_manager else None
         )
-
         token = self.session_manager.user_token if self.session_manager else None
 
         if not username or not token:
             self.show_error("No logged-in user detected. Please log in first.")
             return
-
 
         selected_sites = []
         for i in range(self.my_sites_list.count()):
@@ -738,6 +766,15 @@ class NewTripView(QWidget):
             "🚴 Cycling": ["bike"],
         }.get(mode_text, ["foot"])
 
+        # 👇 נגדיר פונקציה שתקרה אחרי הצלחה
+        def on_success():
+            self.reset_form()
+            if self.on_save_callback:
+                self.on_save_callback()
+
+        trip_id = getattr(self, "current_trip_id", None)
+
+        # נעביר את ה־callback ל־presenter
         self.presenter.save_trip(
             username=username,
             start=self.start_entry.date().toString("yyyy-MM-dd"),
@@ -745,8 +782,20 @@ class NewTripView(QWidget):
             city=self.city_entry.text().strip(),
             transport=transport,
             selected_sites=selected_sites,
+            on_success=on_success,
+            trip_id=trip_id
         )
-        self.reset_form()
+
+    def set_back_callback(self, callback):
+        """עדכון פעולה של כפתור Back בזמן ריצה"""
+        if self._back_btn:
+            try:
+                self._back_btn.clicked.disconnect()
+            except Exception:
+                pass
+            # נעטוף את הקריאה עם reset_form
+            self._back_btn.clicked.connect(lambda: self._handle_back(callback))
+
 
 
 
@@ -790,3 +839,46 @@ class NewTripView(QWidget):
 
         # חזרה לעמוד החיפוש כברירת מחדל
         self.set_page(0)
+
+    def load_trip(self, trip_data: dict):
+        self.current_trip = trip_data
+        self.current_trip_id = trip_data.get("id")
+
+        """מילוי טופס העריכה לפי נתוני טיול קיים"""
+        if not trip_data:
+            return
+
+        # יעד
+        self.city_entry.setText(trip_data.get("destination", ""))
+
+        # כתובת התחלה – אם לא קיים ניקח את שם העיר
+        self.address_entry.setText(trip_data.get("address", trip_data.get("destination", "")))
+
+        # תאריכים
+        start_date = trip_data.get("start_date")
+        end_date = trip_data.get("end_date")
+        if start_date:
+            self.start_entry.setDate(QDate.fromString(start_date, "yyyy-MM-dd"))
+        if end_date:
+            self.end_entry.setDate(QDate.fromString(end_date, "yyyy-MM-dd"))
+
+        # תחבורה
+        transport_map = {
+            "car": "🚗 Car",
+            "foot": "🚶 Walking",
+            "bike": "🚴 Cycling"
+        }
+        transport_list = trip_data.get("transport", [])
+        if transport_list:
+            mode = transport_map.get(transport_list[0], "🚗 Car")
+            index = self.transport_combo.findText(mode)
+            if index >= 0:
+                self.transport_combo.setCurrentIndex(index)
+
+        # אתרים נבחרים
+        self.my_sites_list.clear()
+        for site in trip_data.get("selected_sites", []):
+            self.my_sites_list.addItem(f"📍 {site}")
+
+        # מעבר אוטומטי לדף הרשימה כדי לראות את האטרקציות
+        self.set_page(2)

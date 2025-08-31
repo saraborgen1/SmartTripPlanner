@@ -158,3 +158,26 @@ def get_weather(city: str) -> dict:
     r = _session.get(f"{BASE_URL}/weather_data", params={"city": city}, timeout=DEFAULT_TIMEOUT)
     r.raise_for_status()
     return r.json()
+
+def update_trip(trip_id: int, trip: Dict[str, Any], token: str | None = None) -> Dict[str, Any]:
+    """
+    עדכון טיול קיים לפי ה־id שלו.
+    שולח בקשת PUT לנתיב /update_trip/{trip_id}.
+    כולל כותרת Authorization עם ה-Token.
+    """
+    if not token:
+        raise ValueError("User is not logged in. Cannot update a trip.")
+
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "Content-Type": "application/json"
+    }
+
+    r = _session.put(
+        f"{BASE_URL}/update_trip/{trip_id}",
+        json=trip,
+        headers=headers,
+        timeout=DEFAULT_TIMEOUT
+    )
+    r.raise_for_status()
+    return r.json()

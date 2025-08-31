@@ -39,3 +39,9 @@ def create_new_trip(trip: trip.Trip):
 @router.get("/my_trips/{username}")
 def get_my_trips(username: str):
     return trip_service.get_user_trips(username)
+
+# נתיב PUT בשם /update_trip/{trip_id}
+# נקודת קצה לעדכון טיול קיים לפי ה־id שלו
+@router.put("/update_trip/{trip_id}")
+def update_trip(trip_id: int, trip: trip.Trip):
+    return trip_service.update_trip(trip_id, trip)

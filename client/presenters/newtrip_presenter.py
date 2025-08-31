@@ -88,6 +88,7 @@ class NewTripPresenter:
 
         if image_url:
             from PySide6.QtGui import QPixmap
+            from PySide6.QtCore import Qt
             from urllib.request import urlopen
             try:
                 data = urlopen(image_url).read()
@@ -107,35 +108,35 @@ class NewTripPresenter:
         dialog.exec()
 
     # ===== שמירת טיול =====
-    def save_trip(self, username, start, end, city, transport, selected_sites):
-        """
-        שמירת טיול חדש בשרת עם אימות המשתמש
-        """
-        token = self.session_manager.user_token
+    def save_trip(self, username, start, end, city, transport, selected_sites, on_success=None, trip_id=None):
+            token = self.session_manager.user_token
+            if not token:
+                self.view.show_error("User is not logged in. Please log in first.")
+                return
 
-        if not token:
-            self.view.show_error("User is not logged in. Please log in first.")
-            return
+            try:
+                trip_data = {
+                    "username": username,
+                    "destination": city,
+                    "start_date": start,
+                    "end_date": end,
+                    "selected_sites": [str(site) for site in selected_sites],
+                    "transport": [str(t) for t in (transport or [])],
+                    "notes": ""
+                }
 
-        try:
-            trip_data = {
-                "username": username,
-                "destination": city,
-                "start_date": start,
-                "end_date": end,
-                "selected_sites": [str(site) for site in selected_sites],
-                "transport": [str(t) for t in (transport or [])],
-                "notes": ""
-            }
+                if trip_id:  # 🟢 עריכה
+                    api_client.update_trip(trip_id, trip_data, token=token)
+                    self.view.show_message("Trip updated successfully!")
+                else:        # 🟢 יצירה
+                    api_client.create_trip(trip_data, token=token)
+                    self.view.show_message("Trip created successfully!")
 
-            print("DEBUG TRIP DATA:", trip_data)  # 🟢 נבדוק מה בדיוק נשלח
+                if on_success:
+                    on_success()
 
-            api_client.create_trip(trip_data, token=self.session_manager.user_token)
-
-            self.view.show_message("Trip saved successfully!")
-
-        except Exception as e:
-            self.view.show_error(f"Error saving trip: {e}")
+            except Exception as e:
+                self.view.show_error(f"Error saving trip: {e}")
 
 
     # ===== מזג אוויר (דרך השרת) =====

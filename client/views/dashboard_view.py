@@ -278,9 +278,9 @@ class DashboardView(QWidget):
 
         # יוצרים רק את שני המסכים הראשיים כרגע
         self.pages = {
-            "current": CurrentTripView(),
+            "current": CurrentTripView(edit_trip_callback=self.handle_edit_trip),
             "past": PastTripsView(),
-            "new": None  # ייטען דינמית אחרי ההתחברות
+            "new": None    # placeholder – יוחלף מבחוץ
         }
 
         # הוספת הדפים הקיימים ל־stack
@@ -336,20 +336,19 @@ class DashboardView(QWidget):
         self.ai_button.raise_()
 
 
+    
     def select_page(self, page_key):
-        """מעבר בין דפים עם אנימציה"""
-        if page_key not in self.pages:
-            return
 
-        # אם המשתמש בחר New Adventure ועדיין לא יצרנו את המסך — נבנה אותו
         if page_key == "new" and self.pages["new"] is None:
             from client.utils.session import SessionManager
             from client.views.newtrip_view import NewTripView
-            # שולפים את שם המשתמש מסשן
             session = getattr(self.parentWidget(), "session", None)
             username = session.username if session else None
             self.pages["new"] = NewTripView(username=username, session_manager=session)
             self.content_stack.addWidget(self.pages["new"])
+
+        if page_key not in self.pages or self.pages[page_key] is None:
+            return
 
         # עדכון כפתורי הניווט
         for key, btn in self.nav_buttons.items():
@@ -366,9 +365,8 @@ class DashboardView(QWidget):
             self.page_title.setText(title)
             self.page_subtitle.setText(subtitle)
 
-        # מעבר לדף החדש
-        page_index = list(self.pages.keys()).index(page_key)
-        self.content_stack.setCurrentIndex(page_index)
+        # ✅ מעבר בעזרת ה־Widget עצמו ולא אינדקס
+        self.content_stack.setCurrentWidget(self.pages[page_key])
         self.current_page = page_key
 
 
@@ -401,4 +399,24 @@ class DashboardView(QWidget):
         
         dialog.exec()
 
-    
+    def handle_edit_trip(self, trip_data):
+        """פותח את מסך New Adventure עם נתוני הטיול לעריכה"""
+        # אם עדיין לא נוצר מסך new → ניצור אותו
+        if self.pages["new"] is None:
+            from client.utils.session import SessionManager
+            from client.views.newtrip_view import NewTripView
+            session = getattr(self.parentWidget(), "session", None)
+            username = session.username if session else None
+            self.pages["new"] = NewTripView(username=username, session_manager=session)
+            self.content_stack.addWidget(self.pages["new"])
+
+        # קודם נטען את הנתונים לטופס
+        self.pages["new"].load_trip(trip_data)
+
+        # ורק אז נעבור לעמוד
+        self.select_page("new")
+
+     
+        
+
+        

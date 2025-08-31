@@ -106,20 +106,29 @@ class App(QStackedWidget):
     def on_login_success(self, token: str, username: str):
         self.session.login(token, username)
 
-        # צור את הדף רק אחרי ההתחברות
         self.newtrip_view = NewTripView(
             username=username,
             back_callback=self.show_dashboard,
-            session_manager=self.session   
-            )
+            session_manager=self.session,
+            on_save_callback=self.refresh_current_trip   
+        )
         self.newtrip_presenter = NewTripPresenter(self.newtrip_view, session_manager=self.session)
 
-        # הוסף את המסך ל-QStackedWidget אם עדיין לא הוסף
+        # מוסיפים אותו ל־App הראשי
         if self.indexOf(self.newtrip_view) == -1:
             self.addWidget(self.newtrip_view)
 
+        # מוסיפים אותו גם ל־DashboardView
+        self.dashboard_view.pages["new"] = self.newtrip_view
+        if self.dashboard_view.content_stack.indexOf(self.newtrip_view) == -1:
+            self.dashboard_view.content_stack.addWidget(self.newtrip_view)
+
+        current_view = self.dashboard_view.pages["current"]
+        current_view.edit_trip_callback = self.open_edit_trip    
+
         self.show_dashboard()
         self.refresh_current_trip()
+
 
 
 
@@ -148,6 +157,7 @@ class App(QStackedWidget):
         self.dashboard_view.select_page("past")
 
     def go_to_new_trip(self):
+        self.newtrip_view.set_back_callback(self.show_dashboard)
         """פתיחת מסך יצירת טיול חדש"""
         if not self.session.is_logged_in():
             QMessageBox.warning(self, "Not logged in", "Please login first.")
@@ -167,6 +177,7 @@ class App(QStackedWidget):
             # **עדכון שם המשתמש תמידי**
             self.newtrip_view.username = self.session.username
 
+
         # מעבר למסך יצירת טיול
         self.setCurrentWidget(self.newtrip_view)
 
@@ -183,8 +194,28 @@ class App(QStackedWidget):
         self.dashboard_view.select_page("past")
         self.setCurrentWidget(self.dashboard_view)
 
+    def open_edit_trip(self, trip_data):
+        self.newtrip_view.set_back_callback(lambda: (
+        self.dashboard_view.select_page("current"),
+        self.setCurrentWidget(self.dashboard_view)
+        ))
+
+        """פותח את מסך העריכה עם נתוני הטיול הקיים בתוך ה-Dashboard"""
+        if not hasattr(self, "newtrip_view"):
+            QMessageBox.warning(self, "Error", "Trip editor not available.")
+            return
+
+        # טוענים את הנתונים למסך NewTripView
+        self.newtrip_view.load_trip(trip_data)
+
+    
+
+        # עוברים ל־Dashboard → New Adventure (עמוד עריכה)
+        self.dashboard_view.select_page("new")
+        self.setCurrentWidget(self.dashboard_view)
 
 
+    
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
