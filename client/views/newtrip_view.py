@@ -2,8 +2,8 @@
 
 from PySide6.QtWidgets import (
     QWidget, QLabel, QLineEdit, QPushButton, QVBoxLayout, QHBoxLayout,
-    QListWidget, QListWidgetItem, QMessageBox, QDateEdit, QComboBox,
-    QStackedWidget, QScrollArea, QFrame, QGridLayout, QSizePolicy, QDialog
+    QListWidget, QMessageBox, QDateEdit, QComboBox,
+    QStackedWidget, QScrollArea, QFrame, QSizePolicy,  QTextEdit
 )
 from PySide6.QtCore import QDate, Qt, QSize
 from PySide6.QtGui import QPixmap, QFont, QPalette, QIcon
@@ -101,31 +101,48 @@ class SiteCard(QFrame):
         self._load_image()
     
     def _load_image(self):
-        """טעינת תמונה בצורה בטוחה עם טיפול בברירת מחדל"""
+        """
+        טעינת תמונה בצורה בטוחה עם תמיכה במבנה:
+        place['image'] = { 'url': <str>, 'headers': <dict-optional> }
+        כמו כן תומך גם במחרוזת URL ישירה לנוחות לאחור.
+        """
         place = self.site_data.get("place", {})
-        image_url = place.get("image")
+        image_info = place.get("image")
 
-
-
-        # אם אין תמונה בכלל → ברירת מחדל
-        if not image_url:
+        if not image_info:
             self._set_default_image()
             return
 
         try:
-            from urllib.request import urlopen
-            data = urlopen(image_url).read()
-            pixmap = QPixmap()
-            if pixmap.loadFromData(data):
-                scaled_pixmap = pixmap.scaled(80, 80, Qt.KeepAspectRatio, Qt.SmoothTransformation)
-                self.image_label.setPixmap(scaled_pixmap)
-                self.image_label.setText("")  # מנקה את האייקון 📷
+            import requests
+
+            # תומך גם במחרוזת ישירה וגם ב־dict
+            if isinstance(image_info, dict):
+                url = image_info.get("url")
+                headers = image_info.get("headers", {})
             else:
-                print(f"[DEBUG] טעינת תמונה נכשלה עבור {image_url}")
+                url = str(image_info)
+                headers = {}
+
+            if not url:
                 self._set_default_image()
-        except Exception as e:
-            print(f"[ERROR] לא הצלחתי לטעון את התמונה: {e} | url={image_url}")
+                return
+
+            resp = requests.get(url, headers=headers, timeout=10)
+            if resp.status_code == 200:
+                pixmap = QPixmap()
+                if pixmap.loadFromData(resp.content):
+                    scaled = pixmap.scaled(80, 80, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+                    self.image_label.setPixmap(scaled)
+                    self.image_label.setText("")
+                    return
+
+            # אם הגענו לכאן – נכשל
             self._set_default_image()
+        except Exception as e:
+            print(f"[ERROR] image load failed: {e}")
+            self._set_default_image()
+
 
     def _set_default_image(self):
         """מציב תמונת ברירת מחדל אם אין תמונה זמינה"""
@@ -303,14 +320,14 @@ class NewTripView(QWidget):
         self.btn_search = QPushButton("🔍 Search Sites")
         self.btn_weather = QPushButton("🌤️ Weather")
         self.btn_list = QPushButton("📋 My List")
-                # כפתור שמירה חדש - תמיד גלוי בתפריט
+        self.btn_notes = QPushButton("📝 Notes")
         self.btn_save_trip = QPushButton("💾 Save Trip")
         self.btn_save_trip.setMinimumHeight(45)
         self.btn_save_trip.clicked.connect(self.on_save_trip)
 
 
-        for btn in (self.btn_search, self.btn_weather, self.btn_list, self.btn_save_trip):
-            btn.setCheckable(btn in (self.btn_search, self.btn_weather, self.btn_list))
+        for btn in (self.btn_search, self.btn_weather, self.btn_list, self.btn_notes, self.btn_save_trip):
+            btn.setCheckable(btn in (self.btn_search, self.btn_weather, self.btn_list, self.btn_notes))
             btn.setMinimumHeight(45)
             nav_layout.addWidget(btn)
         main_layout.addLayout(nav_layout)
@@ -323,11 +340,13 @@ class NewTripView(QWidget):
         self._create_search_page()
         self._create_weather_page()
         self._create_list_page()
+        self._create_notes_page()
 
         # חיבור ניווט
         self.btn_search.clicked.connect(lambda: self.set_page(0))
         self.btn_weather.clicked.connect(lambda: self.set_page(1))
         self.btn_list.clicked.connect(lambda: self.set_page(2))
+        self.btn_notes.clicked.connect(lambda: self.set_page(3))
         
         self.set_page(0)
 
@@ -486,11 +505,37 @@ class NewTripView(QWidget):
         # הוספת הכל לסטאק
         self.stack.addWidget(container)
 
+    def _create_notes_page(self):
+        """יצירת עמוד הערות"""
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+
+        page = QWidget()
+        layout = QVBoxLayout(page)
+        layout.setSpacing(16)
+        layout.setContentsMargins(16, 16, 16, 16)
+
+        title = QLabel("Trip Notes")
+        title_font = QFont()
+        title_font.setPointSize(18)
+        title_font.setBold(True)
+        title.setFont(title_font)
+        layout.addWidget(title)
+
+        self.notes_edit = QTextEdit()
+        self.notes_edit.setPlaceholderText("Write your ideas or notes for this trip here...")
+        layout.addWidget(self.notes_edit, stretch=1)
+
+        scroll.setWidget(page)
+        self.stack.addWidget(scroll)
+
 
     def set_page(self, index: int):
         """מעבר בין עמודים"""
         self.stack.setCurrentIndex(index)
-        buttons = [self.btn_search, self.btn_weather, self.btn_list]
+        buttons = [self.btn_search, self.btn_weather, self.btn_list, self.btn_notes]
         for i, btn in enumerate(buttons):
             btn.setChecked(i == index)
 
@@ -596,6 +641,8 @@ class NewTripView(QWidget):
             "🚴 Cycling": ["bike"],
         }.get(mode_text, ["foot"])
 
+        notes_text = self.notes_edit.toPlainText() if hasattr(self, "notes_edit") else ""
+
         # 👇 נגדיר פונקציה שתקרה אחרי הצלחה
         def on_success():
             self.reset_form()
@@ -612,6 +659,7 @@ class NewTripView(QWidget):
             city=self.city_entry.text().strip(),
             transport=transport,
             selected_sites=selected_sites,
+            notes=notes_text, 
             on_success=on_success,
             trip_id=trip_id
         )
@@ -667,6 +715,9 @@ class NewTripView(QWidget):
             if child:
                 child.setParent(None)
 
+        if hasattr(self, "notes_edit"):
+            self.notes_edit.clear()
+
         # חזרה לעמוד החיפוש כברירת מחדל
         self.set_page(0)
 
@@ -709,6 +760,12 @@ class NewTripView(QWidget):
         self.my_sites_list.clear()
         for site in trip_data.get("selected_sites", []):
             self.my_sites_list.addItem(f"📍 {site}")
+
+        # Notes (אם קיים בשמירה)
+        if hasattr(self, "notes_edit"):
+            self.notes_edit.clear()
+            if "notes" in trip_data and isinstance(trip_data["notes"], str):
+                self.notes_edit.setPlainText(trip_data["notes"])
 
         # מעבר אוטומטי לדף הרשימה כדי לראות את האטרקציות
         self.set_page(2)

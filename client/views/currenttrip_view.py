@@ -84,14 +84,22 @@ class CurrentTripView(QWidget):
         transport = ", ".join(trip_data.get("transport", [])) if trip_data.get("transport") else "N/A"
 
         sites_text = "\n".join(f"• {s}" for s in sites) if sites else "No attractions selected"
+        notes = trip_data.get("notes", "")
 
-        self.title.setText(f"Current Trip: {dest}")
-        self.trip_details.setText(
+        details = (
             f"Destination: {dest}\n"
             f"Dates: {start} → {end}\n"
             f"Transport: {transport}\n"
             f"Selected Sites:\n{sites_text}"
         )
+
+        if notes:
+            details += f"\n\nNotes:\n{notes}"
+
+        self.title.setText(f"Current Trip: {dest}")
+        self.trip_details.setText(details)
+
+        
 
     def on_edit_trip_clicked(self):
         if self.current_trip and self.edit_trip_callback:

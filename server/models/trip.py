@@ -5,7 +5,7 @@
 # Pydantic
 # המודל מייצג טיול יחיד במערכת, כולל פרטים על המשתמש, היעד,
 # תאריכים, אתרים לביקור, תחבורה, הערות ותחזית מזג אוויר.
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, field_validator, ValidationInfo
 from typing import List, Optional
 from datetime import datetime
 
@@ -59,8 +59,8 @@ class Trip(BaseModel):
     # או שתאריך החזרה מוקדם – תיזרק שגיאה עם הודעה מתאימה.
     @field_validator("end_date")
     @classmethod
-    def end_after_start(cls, end_date: str, values):
-        start_date = values.get("start_date")
+    def end_after_start(cls, end_date: str, info: ValidationInfo):
+        start_date = info.data.get("start_date")
         if start_date:
             try:
                 # המרה של המחרוזות לאובייקטים מסוג

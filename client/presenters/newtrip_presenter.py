@@ -108,7 +108,7 @@ class NewTripPresenter:
         dialog.exec()
 
     # ===== שמירת טיול =====
-    def save_trip(self, username, start, end, city, transport, selected_sites, on_success=None, trip_id=None):
+    def save_trip(self, username, start, end, city, transport, selected_sites, notes="", on_success=None, trip_id=None):
             token = self.session_manager.user_token
             if not token:
                 self.view.show_error("User is not logged in. Please log in first.")
@@ -122,7 +122,7 @@ class NewTripPresenter:
                     "end_date": end,
                     "selected_sites": [str(site) for site in selected_sites],
                     "transport": [str(t) for t in (transport or [])],
-                    "notes": ""
+                    "notes": notes or ""
                 }
 
                 if trip_id:  # 🟢 עריכה
