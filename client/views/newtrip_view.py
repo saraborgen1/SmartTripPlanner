@@ -5,8 +5,10 @@ from PySide6.QtWidgets import (
     QListWidget, QMessageBox, QDateEdit, QComboBox,
     QStackedWidget, QScrollArea, QFrame, QSizePolicy,  QTextEdit
 )
-from PySide6.QtCore import QDate, Qt, QSize
-from PySide6.QtGui import QPixmap, QFont, QPalette, QIcon
+from PySide6.QtCore import QDate, Qt, QSize, QPointF
+from PySide6.QtGui import QPixmap, QFont, QPainter, QIcon
+from PySide6.QtCharts import QChart, QChartView, QLineSeries, QValueAxis, QCategoryAxis
+
 
 from client.presenters.newtrip_presenter import NewTripPresenter
 from client.utils.ai_button import add_ai_button
@@ -223,9 +225,12 @@ class WeatherWidget(QWidget):
         # אזור התוכן
         self.content_widget = QWidget()
         self.content_layout = QVBoxLayout(self.content_widget)
-        layout.addWidget(self.content_widget)
-        
-        layout.addStretch()
+        layout.addWidget(self.content_widget, 1)  # נותן לתוכן להתרחב לגובה
+        # מחק את שורת addStretch()
+        # אופציונלי, כדי שלא יהיו רווחים מיותרים:
+        self.content_layout.setContentsMargins(0, 0, 0, 0)
+        self.content_layout.setSpacing(8)
+
     
     def update_weather(self, forecast_data):
         """עדכון תצוגת מזג האוויר"""
@@ -245,10 +250,19 @@ class WeatherWidget(QWidget):
         
         # יצירת כרטיסי מזג אוויר
         forecast_list = forecast_data.get("forecast", [])
-        for day_data in forecast_list[:5]:  # מקסימום 5 ימים
-            day_card = self._create_day_card(day_data)
-            self.content_layout.addWidget(day_card)
-    
+        if forecast_list:
+            chart_view = WeatherChart(forecast_list[:7])
+            self.content_layout.addWidget(chart_view)
+            # מוסיפים ScrollArea כדי שלא ייחתך במסכים קטנים
+            scroll = QScrollArea()
+            scroll.setWidgetResizable(True)
+            scroll.setWidget(chart_view)
+
+            self.content_layout.addWidget(scroll, 1)
+
+
+
+
     def _create_day_card(self, day_data):
         """יצירת כרטיס יום"""
         card = QFrame()
@@ -272,6 +286,61 @@ class WeatherWidget(QWidget):
         layout.addWidget(temp_label)
         
         return card
+
+class WeatherChart(QChartView):
+    def __init__(self, forecast_list):
+        super().__init__()
+
+        self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        self.setFixedHeight(250)  # גובה סביר, אפשר לשחק עם המספר
+
+        # סדרות
+        series_min = QLineSeries(name="Min Temp")
+        series_max = QLineSeries(name="Max Temp")
+
+        # צבעים שונים
+        series_min.setColor(Qt.blue)
+        series_max.setColor(Qt.red)
+
+        # סימנים על נקודות
+        series_min.setPointsVisible(True)
+        series_max.setPointsVisible(True)
+
+        # הוספת נקודות לפי ימים
+        for i, day_data in enumerate(forecast_list):
+            try:
+                temp_min = float(str(day_data.get("temp_min", 0)).replace("°", ""))
+                temp_max = float(str(day_data.get("temp_max", 0)).replace("°", ""))
+                series_min.append(QPointF(i, temp_min))
+                series_max.append(QPointF(i, temp_max))
+            except Exception:
+                continue
+
+        # הגדרת הגרף
+        chart = QChart()
+        chart.addSeries(series_min)
+        chart.addSeries(series_max)
+        chart.setTitle("Weather Forecast")
+        chart.createDefaultAxes()
+        chart.legend().setVisible(True)
+
+        # ציר X = ימים עם תוויות תאריכים
+        axisX = QCategoryAxis()
+        axisX.setTitleText("Day")
+        for i, day_data in enumerate(forecast_list):
+            date_str = str(day_data.get("date", f"Day {i+1}"))
+            axisX.append(date_str, i)
+        chart.setAxisX(axisX, series_min)
+        chart.setAxisX(axisX, series_max)
+
+        # ציר Y = טמפרטורה
+        axisY = QValueAxis()
+        axisY.setTitleText("°C")
+        chart.setAxisY(axisY, series_min)
+        chart.setAxisY(axisY, series_max)
+
+        self.setChart(chart)
+        self.setRenderHint(QPainter.Antialiasing)
 
 
 class NewTripView(QWidget):
@@ -456,15 +525,19 @@ class NewTripView(QWidget):
         self.city_entry.returnPressed.connect(self.create_btn.click)
 
     def _create_weather_page(self):
-        """יצירת עמוד מזג האוויר"""
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
-        scroll.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
-        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        
+
         self.weather_widget = WeatherWidget()
+        self.weather_widget.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+
         scroll.setWidget(self.weather_widget)
         self.stack.addWidget(scroll)
+
+
+        
+
+
 
     def _create_list_page(self):
         """יצירת עמוד הרשימה"""
