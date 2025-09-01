@@ -23,18 +23,6 @@ class SiteCard(QFrame):
         
         # עיצוב הכרטיס
         self.setFrameStyle(QFrame.StyledPanel)
-        self.setStyleSheet("""
-            SiteCard {
-                border: 1px solid #e0e0e0;
-                border-radius: 12px;
-                background-color: white;
-                margin: 4px;
-            }
-            SiteCard:hover {
-                border: 2px solid #667eea;
-                box-shadow: 0 4px 8px rgba(102, 126, 234, 0.1);
-            }
-        """)
         self.setMinimumHeight(120)
         self.setMaximumHeight(140)
         self.setCursor(Qt.PointingHandCursor)
@@ -47,11 +35,6 @@ class SiteCard(QFrame):
         # תמונה (משמאל)
         self.image_label = QLabel()
         self.image_label.setFixedSize(80, 80)
-        self.image_label.setStyleSheet("""
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            background-color: #f8f9fa;
-        """)
         self.image_label.setAlignment(Qt.AlignCenter)
         self.image_label.setText("📷")  # placeholder
         self.image_label.setScaledContents(True)
@@ -71,13 +54,11 @@ class SiteCard(QFrame):
         title_font.setPointSize(14)
         title_font.setBold(True)
         title_label.setFont(title_font)
-        title_label.setStyleSheet("color: #2d3748; margin-bottom: 2px;")
         title_label.setWordWrap(True)
         text_layout.addWidget(title_label)
         
         # קטגוריה
         category_label = QLabel(f"📍 {category}")
-        category_label.setStyleSheet("color: #718096; font-size: 12px;")
         text_layout.addWidget(category_label)
         
         # דירוג (אם קיים)
@@ -90,7 +71,6 @@ class SiteCard(QFrame):
                 rating_text = "⭐" * 0  # אין דירוג תקין
 
             rating_label = QLabel(f"{rating_text} ({rating})")
-            rating_label.setStyleSheet("color: #f6ad55; font-size: 12px;")
             text_layout.addWidget(rating_label)
         
         # מידע מסלול
@@ -101,7 +81,6 @@ class SiteCard(QFrame):
                 distance = segments[0].get("distance", 0)
                 duration = segments[0].get("duration", 0)
                 route_label = QLabel(f"🚗 {distance:.0f}m • {duration/60:.0f} min")
-                route_label.setStyleSheet("color: #4a5568; font-size: 11px;")
                 text_layout.addWidget(route_label)
         
         text_layout.addStretch()
@@ -113,16 +92,6 @@ class SiteCard(QFrame):
         self.add_btn.setIcon(QIcon("client/assets/plus.png"))  # פלוס מתוך הקובץ המקומי
         self.add_btn.setIconSize(QSize(24, 24))
         self.add_btn.setFixedSize(40, 40)
-        self.add_btn.setStyleSheet("""
-            QPushButton {
-                border-radius: 20px;
-                background-color: #7C3AED;
-            }
-            QPushButton:hover {
-                background-color: #6D28D9;
-            }
-        """)
-
 
         self.add_btn.clicked.connect(self._toggle_site)
         main_layout.addWidget(self.add_btn, 0, Qt.AlignRight | Qt.AlignVCenter)
@@ -191,15 +160,6 @@ class SiteCard(QFrame):
 
             # חזרה למצב פלוס סגול
             self.add_btn.setIcon(QIcon("client/assets/plus.png"))
-            self.add_btn.setStyleSheet("""
-                QPushButton {
-                    border-radius: 20px;
-                    background-color: #7C3AED;
-                }
-                QPushButton:hover {
-                    background-color: #6D28D9;
-                }
-            """)
         else:
             # מוסיפים לרשימה
             self.parent_view.add_site_to_my_list(name)
@@ -207,15 +167,14 @@ class SiteCard(QFrame):
             # מעבר למצב וי ירוק
             self.add_btn.setIcon(QIcon("client/assets/check.png"))
             self.add_btn.setStyleSheet("""
-                QPushButton {
-                    border-radius: 20px;
-                    background-color: #10B981;
-                }
-                QPushButton:hover {
-                    background-color: #059669;
-                }
-            """)
-
+                            QPushButton {
+                                border-radius: 20px;
+                                background-color: #10B981;
+                            }
+                            QPushButton:hover {
+                                background-color: #059669;
+                            }
+                        """)
 
     
     def mousePressEvent(self, event):
@@ -242,7 +201,6 @@ class WeatherWidget(QWidget):
         title_font.setPointSize(18)
         title_font.setBold(True)
         title.setFont(title_font)
-        title.setStyleSheet("color: #2d3748; margin-bottom: 10px;")
         layout.addWidget(title)
         
         # אזור התוכן
@@ -261,13 +219,11 @@ class WeatherWidget(QWidget):
         if not forecast_data or "error" in forecast_data:
             error_msg = forecast_data.get("error", "No weather data available") if forecast_data else "No weather data available"
             error_label = QLabel(f"❌ {error_msg}")
-            error_label.setStyleSheet("color: #e53e3e; font-size: 14px; padding: 20px;")
             self.content_layout.addWidget(error_label)
             return
         
         dest = forecast_data.get("destination", "Unknown Location")
         location_label = QLabel(f"📍 {dest}")
-        location_label.setStyleSheet("color: #4a5568; font-size: 16px; margin-bottom: 10px;")
         self.content_layout.addWidget(location_label)
         
         # יצירת כרטיסי מזג אוויר
@@ -279,36 +235,23 @@ class WeatherWidget(QWidget):
     def _create_day_card(self, day_data):
         """יצירת כרטיס יום"""
         card = QFrame()
-        card.setStyleSheet("""
-            QFrame {
-                border: 1px solid #e2e8f0;
-                border-radius: 8px;
-                background-color: #f7fafc;
-                padding: 12px;
-                margin: 2px 0;
-            }
-        """)
-        
         layout = QHBoxLayout(card)
         
         # תאריך
         date_str = day_data.get("date", "")
         date_label = QLabel(date_str)
-        date_label.setStyleSheet("font-weight: bold; color: #2d3748;")
         layout.addWidget(date_label)
         
         layout.addStretch()
         
         # אייקון מזג אוויר (פשוט לעכשיו)
         weather_icon = QLabel("☀️")  # ברירת מחדל - שמש
-        weather_icon.setStyleSheet("font-size: 20px;")
         layout.addWidget(weather_icon)
         
         # טמפרטורות
         temp_min = day_data.get("temp_min", "?")
         temp_max = day_data.get("temp_max", "?")
         temp_label = QLabel(f"{temp_min}° - {temp_max}°C")
-        temp_label.setStyleSheet("color: #4a5568; font-weight: bold;")
         layout.addWidget(temp_label)
         
         return card
@@ -327,47 +270,6 @@ class NewTripView(QWidget):
 
 
         self.setWindowTitle("Create New Trip")
-        self.setStyleSheet("""
-            QWidget {
-                background-color: #f7fafc;
-                font-family: 'Segoe UI', Arial, sans-serif;
-                font-size: 13px;
-            }
-            QLabel { color: #2d3748; }
-            QLineEdit, QComboBox, QDateEdit {
-                border: 1px solid #cbd5e0;
-                border-radius: 8px;
-                padding: 8px 12px;
-                background-color: white;
-                min-height: 20px;
-            }
-            QLineEdit:focus, QComboBox:focus, QDateEdit:focus {
-                border: 2px solid #667eea;
-                outline: none;
-            }
-            QPushButton {
-                border: none;
-                border-radius: 8px;
-                padding: 10px 20px;
-                background-color: #667eea;
-                color: white;
-                font-weight: 600;
-                min-height: 20px;
-            }
-            QPushButton:hover {
-                background-color: #5a67d8;
-            }
-            QPushButton:pressed {
-                background-color: #4c51bf;
-            }
-            QPushButton:checked {
-                background-color: #4c51bf;
-            }
-            QScrollArea {
-                border: none;
-                background-color: transparent;
-            }
-        """)
 
         self.setup_ui(back_callback)
         self.showMaximized()
@@ -384,25 +286,12 @@ class NewTripView(QWidget):
         title_font.setPointSize(24)
         title_font.setBold(True)
         title.setFont(title_font)
-        title.setStyleSheet("color: #2d3748; margin-bottom: 10px;")
         main_layout.addWidget(title)
 
         # כפתור Back (אם קיים)
         if back_callback:
             self._back_btn = QPushButton("← Back")
             self._back_btn.clicked.connect(lambda: self._handle_back(back_callback))
-            self._back_btn.setStyleSheet("""
-                QPushButton {
-                    background-color: #e2e8f0;
-                    color: #4a5568;
-                    border-radius: 6px;
-                    padding: 6px 12px;
-                    font-size: 12px;
-                }
-                QPushButton:hover {
-                    background-color: #cbd5e0;
-                }
-            """)
             main_layout.addWidget(self._back_btn, alignment=Qt.AlignLeft)
 
 
@@ -417,19 +306,6 @@ class NewTripView(QWidget):
                 # כפתור שמירה חדש - תמיד גלוי בתפריט
         self.btn_save_trip = QPushButton("💾 Save Trip")
         self.btn_save_trip.setMinimumHeight(45)
-        self.btn_save_trip.setStyleSheet("""
-            QPushButton {
-                background-color: #38a169;
-                font-weight: bold;
-                font-size: 14px;
-                padding: 8px 16px;
-                border-radius: 8px;
-                color: white;
-            }
-            QPushButton:hover {
-                background-color: #2f855a;
-            }
-        """)
         self.btn_save_trip.clicked.connect(self.on_save_trip)
 
 
@@ -474,14 +350,6 @@ class NewTripView(QWidget):
 
         # טופס החיפוש
         form_frame = QFrame()
-        form_frame.setStyleSheet("""
-            QFrame {
-                background-color: white;
-                border-radius: 12px;
-                padding: 20px;
-                border: 1px solid #e2e8f0;
-            }
-        """)
         form_layout = QVBoxLayout(form_frame)
 
         # שדות הטופס
@@ -494,7 +362,6 @@ class NewTripView(QWidget):
         results_font.setPointSize(16)
         results_font.setBold(True)
         results_label.setFont(results_font)
-        results_label.setStyleSheet("margin-top: 20px; color: #2d3748;")
         layout.addWidget(results_label)
 
         # אזור כרטיסי האטרקציות
@@ -562,21 +429,6 @@ class NewTripView(QWidget):
         # כפתור חיפוש
         self.create_btn = QPushButton("🔍 Search for Sites")
         self.create_btn.setMinimumHeight(50)
-        self.create_btn.setStyleSheet("""
-            QPushButton {
-                background-color: #48bb78;
-                font-size: 16px;
-                font-weight: bold;
-                margin-top: 10px;
-            }
-            QPushButton:hover {
-                background-color: #38a169;
-            }
-            QPushButton:disabled {
-                background-color: #a0aec0;
-                color: #718096;
-            }
-        """)
         self.create_btn.clicked.connect(self.on_create_trip)
         layout.addWidget(self.create_btn)
 
@@ -623,27 +475,6 @@ class NewTripView(QWidget):
 
         # רשימת האטרקציות
         self.my_sites_list = QListWidget()
-        self.my_sites_list.setStyleSheet("""
-            QListWidget {
-                background-color: white;
-                border: 1px solid #e2e8f0;
-                border-radius: 8px;
-                padding: 8px;
-            }
-            QListWidget::item {
-                padding: 12px;
-                border-bottom: 1px solid #f1f5f9;
-                border-radius: 4px;
-                margin: 2px 0;
-            }
-            QListWidget::item:hover {
-                background-color: #f8fafc;
-            }
-            QListWidget::item:selected {
-                background-color: #edf2f7;
-                color: #2d3748;
-            }
-        """)
         layout.addWidget(self.my_sites_list, stretch=1)
 
         page.setLayout(layout)
@@ -705,7 +536,6 @@ class NewTripView(QWidget):
 
         if not sites:
             no_results = QLabel("No sites found. Try a different city or search terms.")
-            no_results.setStyleSheet("color: #718096; font-style: italic; padding: 20px; text-align: center;")
             no_results.setAlignment(Qt.AlignCenter)
             self.sites_layout.addWidget(no_results)
             return

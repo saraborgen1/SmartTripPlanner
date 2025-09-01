@@ -1,110 +1,477 @@
-QWidget { 
-                background-color: #f8fafc; 
-                font-family: 'Inter', 'Segoe UI', system-ui, sans-serif; 
-                color: #2d3748;
-            }
-            
-            QFrame#modern_sidebar {
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:1, 
-                    stop:0 #1e2026, 
-                    stop:1 #2c3e50);
-                min-width: 280px; 
-                max-width: 280px; 
-                border: none;
-                border-top-right-radius: 20px;
-                border-bottom-right-radius: 20px;
-            }
-            
-            QLabel#brand_title {
-                color: #ffffff; 
-                font-size: 28px; 
-                font-weight: 700;
-                padding: 30px 20px 10px 20px;
-                letter-spacing: -0.5px;
-            }
-            
-            QLabel#brand_subtitle {
-                color: #a0aec0; 
-                font-size: 14px; 
-                font-weight: 400;
-                padding: 0 20px 30px 20px;
-                letter-spacing: 0.5px;
-            }
-            
-            QLabel#welcome_label {
-                color: #cbd5e0; 
-                font-size: 14px; 
-                font-weight: 500;
-                margin: 0 20px 20px 20px;
-                padding: 12px 16px;
-                background-color: rgba(255, 255, 255, 0.1);
-                border-radius: 12px;
-                text-align: center;
-            }
-            
-            QPushButton#nav_button {
-                background: transparent;
-                border: none;
-                color: #e2e8f0;
-                font-size: 16px;
-                font-weight: 500;
-                padding: 18px 24px;
-                text-align: left;
-                border-radius: 14px;
-                margin: 4px 16px;
-                transition: all 0.3s ease;
-            }
-            
-            QPushButton#nav_button:hover {
-                background-color: rgba(255, 255, 255, 0.15);
-                color: #ffffff;
-                transform: translateX(4px);
-            }
-            
-            QPushButton#nav_button:checked {
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, 
-                    stop:0 #667eea, 
-                    stop:1 #3498db);
-                color: white;
-                font-weight: 600;
-                box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
-            }
-            
-            QPushButton#nav_button:pressed { 
-                background-color: #2980b9; 
-            }
-            
-            QFrame#main_content_frame {
-                background-color: #ffffff;
-                border-radius: 20px;
-                margin: 20px 20px 20px 0;
-                border: 1px solid #e2e8f0;
-                box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-            }
-            
-            QPushButton#ai_floating_btn {
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:1, 
-                    stop:0 #667eea, 
-                    stop:1 #764ba2);
-                border: none;
-                border-radius: 32px;
-                color: white;
-                font-size: 20px;
-                font-weight: bold;
-                min-width: 64px;
-                min-height: 64px;
-                max-width: 64px;
-                max-height: 64px;
-            }
-            
-            QPushButton#ai_floating_btn:hover {
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:1, 
-                    stop:0 #5563d6, 
-                    stop:1 #553c9a);
-            }
-            
-            QPushButton#ai_floating_btn:pressed {
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:1, 
-                    stop:0 #4c51bf, 
-                    stop:1 #4c1d95);
-            }
+/* =========================
+   GLOBAL / BASE STYLES
+   Applied to all QWidget elements
+   ========================= */
+QWidget {
+    background-color: transparent;
+    font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+    color: #2d3748;
+    font-size: 14px;
+}
+
+/* =========================
+   BASIC INPUT ELEMENTS
+   QLineEdit, QComboBox, QDateEdit, QTextEdit
+   ========================= */
+QLineEdit, QComboBox, QDateEdit, QTextEdit {
+    border: 1px solid #cbd5e0;
+    border-radius: 8px;
+    padding: 8px 12px;
+    background-color: rgba(255,255,255,0.6);
+    min-height: 32px;
+    font-size: 15px;
+}
+
+QLineEdit:focus, QComboBox:focus, QDateEdit:focus, QTextEdit:focus {
+    border: 2px solid #667eea;
+    outline: none;
+    background-color: rgba(240,244,255,0.7);
+}
+
+/* =========================
+   COMBO BOX SPECIFIC STYLING
+   Dropdown arrow and behavior
+   ========================= */
+QComboBox {
+    padding-right: 36px;
+    background: rgba(255,255,255,0.6);
+    border: 1px solid #cbd5e0;
+    border-radius: 8px;
+    min-height: 32px;
+    font-size: 15px;
+}
+
+QComboBox::drop-down {
+    subcontrol-origin: padding;
+    subcontrol-position: top right;
+    width: 32px;
+    border-left: 0px;
+    border-radius: 0 8px 8px 0;
+    background: transparent;
+}
+
+QComboBox::down-arrow {
+    image: url("client/assets/choice.png");
+    width: 25px;
+    height: 25px;
+    margin-right: 10px;
+    margin-top: 6px;
+}
+
+QComboBox QAbstractItemView {
+    border: 1px solid #cbd5e0;
+    border-radius: 8px;
+    background: rgba(255,255,255,0.85);
+    selection-background-color: #e6e8fa;
+    selection-color: #2d3748;
+    font-size: 15px;
+    padding: 4px;
+}
+
+/* =========================
+   DATE EDIT SPECIFIC STYLING
+   Calendar dropdown arrow
+   ========================= */
+QDateEdit::drop-down {
+    subcontrol-origin: padding;
+    subcontrol-position: top right;
+    width: 32px;
+    border-left: 0px;
+    border-radius: 0 8px 8px 0;
+    background: transparent;
+}
+
+QDateEdit::down-arrow {
+    image: url("client/assets/choice.png");
+    width: 25px;
+    height: 25px;
+    margin-right: 10px;
+    margin-top: 6px;
+}
+
+/* =========================
+   BASIC BUTTON STYLING
+   Default appearance for all buttons
+   ========================= */
+QPushButton {
+    border: none;
+    border-radius: 8px;
+    padding: 10px 20px;
+    background-color: rgba(102,126,234,0.85);
+    color: white;
+    font-weight: 600;
+    min-height: 20px;
+    font-size: 15px;
+}
+
+QPushButton:hover {
+    background-color: rgba(90,103,216,0.95);
+}
+
+QPushButton:pressed {
+    background-color: rgba(76,81,191,1);
+}
+
+QPushButton:checked {
+    background-color: rgba(76,81,191,1);
+}
+
+QPushButton:disabled {
+    background-color: #a0aec0;
+    color: #718096;
+}
+
+/* =========================
+   LABELS
+   Basic text styling
+   ========================= */
+QLabel {
+    color: #2d3748;
+    background: transparent;
+    border: none;
+    font-size: 15px;
+    font-weight: 500;
+    padding: 0 2px 4px 2px;
+}
+
+/* =========================
+   SCROLL AREAS AND SCROLL BARS
+   Styling for scrollable content
+   ========================= */
+QScrollArea {
+    border: none;
+    background: transparent;
+}
+
+QScrollBar:vertical {
+    background: #e2e8f0;
+    width: 12px;
+    margin: 4px 0 4px 0;
+    border-radius: 6px;
+}
+
+QScrollBar::handle:vertical {
+    background: #667eea;
+    min-height: 30px;
+    border-radius: 6px;
+}
+
+QScrollBar::handle:vertical:hover {
+    background: #5a67d8;
+}
+
+QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
+    height: 0;
+    background: none;
+    border: none;
+}
+
+QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
+    background: none;
+}
+
+QScrollBar:horizontal {
+    background: #e2e8f0;
+    height: 12px;
+    margin: 0 4px 0 4px;
+    border-radius: 6px;
+}
+
+QScrollBar::handle:horizontal {
+    background: #667eea;
+    min-width: 30px;
+    border-radius: 6px;
+}
+
+QScrollBar::handle:horizontal:hover {
+    background: #5a67d8;
+}
+
+QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal {
+    width: 0;
+    background: none;
+    border: none;
+}
+
+QScrollBar::add-page:horizontal, QScrollBar::sub-page:horizontal {
+    background: none;
+}
+
+/* =========================
+   LIST WIDGETS
+   Styling for list components
+   ========================= */
+QListWidget {
+    background: rgba(255,255,255,0.5);
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 8px;
+}
+
+QListWidget::item {
+    padding: 12px;
+    border-bottom: 1px solid #f1f5f9;
+    border-radius: 4px;
+    margin: 2px 0;
+}
+
+QListWidget::item:hover {
+    background-color: #f8fafc;
+}
+
+QListWidget::item:selected {
+    background-color: #edf2f7;
+    color: #2d3748;
+}
+
+/* =========================
+   FRAMES AND CONTAINERS
+   General container styling
+   ========================= */
+QFrame, QGroupBox, .QFrame, .QWidget#centralWidget {
+    background: rgba(255,255,255,0.3);
+    border-radius: 16px;
+}
+
+/* =========================
+   DASHBOARD SIDEBAR
+   Left navigation panel in DashboardView
+   ========================= */
+QFrame#modern_sidebar {
+    min-width: 260px;
+    background: rgba(33, 150, 243, 0.18);
+    border-top-right-radius: 30px;
+    border-bottom-right-radius: 30px;
+    box-shadow: 0 4px 24px rgba(33,150,243,0.08);
+}
+
+/* Brand title - main app name */
+QLabel#brand_title {
+    color: #1976d2;
+    font-size: 28px;
+    font-weight: 800;
+    background-color: transparent;
+    padding: 20px 16px 4px 16px;
+}
+
+/* Brand subtitle - secondary app name */
+QLabel#brand_subtitle {
+    color: #1976d2;
+    font-size: 28px;
+    font-weight: 800;
+    background-color: transparent;
+    padding: 0 20px 16px 10px 16px;
+}
+
+/* Welcome message for logged in user */
+QLabel#welcome_label {
+    color: #1976d2;
+    font-size: 20px;
+    font-weight: 800;
+    margin: 0 20px 20px 20px;
+    padding: 12px 16px;
+    background-color: transparent;
+    border-radius: 12px;
+    text-align: center;
+}
+
+/* Navigation buttons in sidebar */
+QPushButton#nav_button {
+    background: transparent;
+    border: none;
+    color: #1976d2;
+    font-size: 18px;
+    font-weight: 800;
+    padding: 18px 24px;
+    text-align: left;
+    border-radius: 0;
+    margin: 0;
+    width: 100%;
+}
+
+QPushButton#nav_button:hover {
+    background: rgba(187, 222, 251, 0.7);
+    color: #1565c0;
+}
+
+QPushButton#nav_button:checked {
+    background: rgba(144, 202, 249, 0.8);
+    color: #1565c0;
+    border-right: 4px solid #00bcd4;
+    font-weight: 600;
+}
+
+QPushButton#nav_button:pressed {
+    background: rgba(144, 202, 249, 0.8);
+    color: #1565c0;
+}
+
+/* =========================
+   MAIN CONTENT AREA
+   Central content panel in DashboardView
+   ========================= */
+QFrame#main_content_frame {
+    background-color: rgba(255,255,255,0.3);
+    border-radius: 20px;
+    margin: 20px 20px 20px 0;
+    border: 1px solid #b3e5fc;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.07);
+}
+
+/* =========================
+   FLOATING AI BUTTON
+   Circular AI assistant button
+   ========================= */
+QPushButton#ai_floating_btn {
+    background: qlineargradient(x1:0, y1:0, x2:1, y2:1, 
+        stop:0 #4fc3f7, 
+        stop:1 #00bcd4);
+    border: none;
+    border-radius: 32px !important;
+    color: white;
+    font-size: 18px;
+    font-weight: bold;
+    min-width: 64px;
+    min-height: 64px;
+    max-width: 64px;
+    max-height: 64px;
+    padding: 0;
+}
+
+QPushButton#ai_floating_btn:hover {
+    background: qlineargradient(x1:0, y1:0, x2:1, y2:1, 
+        stop:0 #29b6f6, 
+        stop:1 #00acc1);
+}
+
+QPushButton#ai_floating_btn:pressed {
+    background: qlineargradient(x1:0, y1:0, x2:1, y2:1, 
+        stop:0 #039be5, 
+        stop:1 #00838f);
+}
+
+/* =========================
+   DIALOG WINDOWS
+   Modal dialogs and popups
+   ========================= */
+QDialog {
+    background-color: rgba(255,255,255,0.3);
+    border-radius: 20px;
+}
+
+QDialog QWidget {
+    background-color: transparent;
+}
+
+/* =========================
+   NEW TRIP VIEW - TITLE LABELS
+   Page titles and section headers
+   ========================= */
+QLabel[objectName="title"], QLabel[objectName="section"] {
+    font-size: 22px;
+    font-weight: bold;
+    color: #374151;
+    letter-spacing: 0.5px;
+    padding: 0 0 8px 0;
+    background: transparent;
+    border: none;
+}
+
+/* =========================
+   NEW TRIP VIEW - SAVE BUTTON
+   Special styling for the save trip button
+   ========================= */
+QPushButton#btn_save_trip {
+    background-color: #38a169;
+    font-weight: bold;
+    font-size: 14px;
+    padding: 8px 16px;
+    border-radius: 8px;
+    color: white;
+    min-height: 45px;
+}
+
+QPushButton#btn_save_trip:hover {
+    background-color: #2f855a;
+}
+
+/* =========================
+   NEW TRIP VIEW - SEARCH BUTTON
+   Main search/create button
+   ========================= */
+QPushButton#create_btn {
+    background-color: #48bb78;
+    font-size: 16px;
+    font-weight: bold;
+    margin-top: 10px;
+    min-height: 50px;
+}
+
+QPushButton#create_btn:hover {
+    background-color: #38a169;
+}
+
+QPushButton#create_btn:disabled {
+    background-color: #a0aec0;
+    color: #718096;
+}
+
+/* =========================
+   SITE CARDS
+   Individual attraction cards in search results
+   ========================= */
+SiteCard {
+    border: 1px solid #e0e0e0;
+    border-radius: 12px;
+    background-color: white;
+    margin: 4px;
+}
+
+SiteCard:hover {
+    border: 2px solid #667eea;
+    box-shadow: 0 4px 8px rgba(102, 126, 234, 0.1);
+}
+
+/* Add button on site cards */
+QPushButton#site_add_btn {
+    border-radius: 20px;
+    background-color: #48bb78;
+    color: white;
+    font-size: 16px;
+    font-weight: bold;
+    min-width: 40px;
+    min-height: 40px;
+    max-width: 40px;
+    max-height: 40px;
+}
+
+QPushButton#site_add_btn:hover {
+    background-color: #38a169;
+}
+
+QPushButton#site_add_btn:pressed {
+    background-color: #2f855a;
+}
+
+/* =========================
+   WEATHER WIDGET
+   Weather forecast display
+   ========================= */
+QFrame#weather_day_card {
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    background-color: #f7fafc;
+    padding: 12px;
+    margin: 2px 0;
+}
+
+/* =========================
+   SEARCH FORM
+   Trip search form container
+   ========================= */
+QFrame#search_form {
+    background-color: white;
+    border-radius: 12px;
+    padding: 20px;
+    border: 1px solid #e2e8f0;
+}

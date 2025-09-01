@@ -11,6 +11,9 @@ from client.views.currenttrip_view import CurrentTripView
 from client.views.past_trips_view import PastTripsView
 from client.views.newtrip_view import NewTripView
 from client.views.ai_consult_view import AIChatView
+from PySide6.QtWidgets import QSizePolicy
+from PySide6.QtWidgets import QLabel
+from PySide6.QtGui import QPixmap
 
 
 class DashboardView(QWidget):
@@ -18,12 +21,16 @@ class DashboardView(QWidget):
         super().__init__()
         self.setWindowTitle("Smart Trip Planner")
         self.setMinimumSize(1200, 800)
+
+        # --- הוספת רקע תמונה ---
+        self.bg_label = QLabel(self)
+        self.bg_label.setPixmap(QPixmap("client/assets/background.png"))  # שימי כאן את הנתיב שלך
+        self.bg_label.setScaledContents(True)
+        self.bg_label.setGeometry(self.rect())
+        self.bg_label.lower()  # שיהיה מאחורי הכל
         
         # אפקט מעבר עמודים
         self.page_animation = None
-        
-        # הגדרת סגנונות מודרניים
-        self.setup_modern_styles()
         
         # Layout ראשי
         root_layout = QHBoxLayout(self)
@@ -43,161 +50,38 @@ class DashboardView(QWidget):
         self.current_page = None
         self.select_page("current")
 
-    def setup_modern_styles(self):
-        """הגדרת סגנונות מודרניים לאפליקציה"""
-        self.setStyleSheet("""
-            QWidget { 
-                background-color: #f8fafc; 
-                font-family: 'Inter', 'Segoe UI', system-ui, sans-serif; 
-                color: #2d3748;
-            }
-            
-            QFrame#modern_sidebar {
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:1, 
-                    stop:0 #1e2026, 
-                    stop:1 #2c3e50);
-                min-width: 280px; 
-                max-width: 280px; 
-                border: none;
-                border-top-right-radius: 20px;
-                border-bottom-right-radius: 20px;
-            }
-            
-            QLabel#brand_title {
-                color: #ffffff; 
-                font-size: 28px; 
-                font-weight: 700;
-                background-color: rgba(255, 255, 255, 0.1);
-                padding: 30px 20px 10px 20px;
-                letter-spacing: -0.5px;
-            }
-            
-            QLabel#brand_subtitle {
-                color: #a0aec0; 
-                font-size: 14px; 
-                font-weight: 400;
-                background-color: rgba(255, 255, 255, 0.1);
-                padding: 0 20px 30px 20px;
-                letter-spacing: 0.5px;
-            }
-            
-            QLabel#welcome_label {
-                color: #cbd5e0; 
-                font-size: 14px; 
-                font-weight: 500;
-                margin: 0 20px 20px 20px;
-                padding: 12px 16px;
-                background-color: rgba(255, 255, 255, 0.1);
-                border-radius: 12px;
-                text-align: center;
-            }
-            
-            QPushButton#nav_button {
-                background: transparent;
-                border: none;
-                color: #e2e8f0;
-                font-size: 16px;
-                font-weight: 500;
-                padding: 18px 24px;
-                text-align: left;
-                border-radius: 14px;
-                margin: 4px 16px;
-                transition: all 0.3s ease;
-            }
-            
-            QPushButton#nav_button:hover {
-                background-color: rgba(255, 255, 255, 0.15);
-                color: #ffffff;
-                transform: translateX(4px);
-            }
-            
-            QPushButton#nav_button:checked {
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, 
-                    stop:0 #667eea, 
-                    stop:1 #3498db);
-                color: white;
-                font-weight: 600;
-                box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
-            }
-            
-            QPushButton#nav_button:pressed { 
-                background-color: #2980b9; 
-            }
-            
-            QFrame#main_content_frame {
-                background-color: #ffffff;
-                border-radius: 20px;
-                margin: 20px 20px 20px 0;
-                border: 1px solid #e2e8f0;
-                box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-            }
-            
-            QPushButton#ai_floating_btn {
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:1, 
-                    stop:0 #667eea, 
-                    stop:1 #764ba2);
-                border: none;
-                border-radius: 32px;
-                color: white;
-                font-size: 20px;
-                font-weight: bold;
-                min-width: 64px;
-                min-height: 64px;
-                max-width: 64px;
-                max-height: 64px;
-            }
-            
-            QPushButton#ai_floating_btn:hover {
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:1, 
-                    stop:0 #5563d6, 
-                    stop:1 #553c9a);
-            }
-            
-            QPushButton#ai_floating_btn:pressed {
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:1, 
-                    stop:0 #4c51bf, 
-                    stop:1 #4c1d95);
-            }
-        """)
-
     def create_modern_sidebar(self, root_layout):
-        """יצירת תפריט צדי מודרני"""
+        # יצירת תפריט צדי מודרני
         sidebar_frame = QFrame()
         sidebar_frame.setObjectName("modern_sidebar")
+        sidebar_frame.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)  # חשוב!
         sidebar_layout = QVBoxLayout(sidebar_frame)
         sidebar_layout.setContentsMargins(0, 0, 0, 0)
         sidebar_layout.setSpacing(0)
-        
+
         # כותרת המותג
         brand_title = QLabel("Smart Trip")
         brand_title.setObjectName("brand_title")
         brand_title.setAlignment(Qt.AlignCenter)
         sidebar_layout.addWidget(brand_title)
-        
+
         # תת-כותרת
         brand_subtitle = QLabel("PLANNER✈️")
         brand_subtitle.setObjectName("brand_subtitle")
         brand_subtitle.setAlignment(Qt.AlignCenter)
         sidebar_layout.addWidget(brand_subtitle)
-        
+
         # קו מפריד אלגנטי
         separator = QFrame()
         separator.setFrameShape(QFrame.HLine)
-        separator.setStyleSheet("""
-            QFrame {
-                background-color: rgba(255, 255, 255, 0.2);
-                max-height: 1px;
-                margin: 20px 40px;
-            }
-        """)
         sidebar_layout.addWidget(separator)
-        
+
         # ברכת משתמש
-        self.welcome_label = QLabel("Welcome, Guest")
+        self.welcome_label = QLabel("Welcome, Guest🏃‍➡️")
         self.welcome_label.setObjectName("welcome_label")
         self.welcome_label.setAlignment(Qt.AlignCenter)
         sidebar_layout.addWidget(self.welcome_label)
-        
+
         # כפתורי ניווט מעוצבים
         self.nav_buttons = {}
         nav_items = [
@@ -205,7 +89,7 @@ class DashboardView(QWidget):
             ("past", "📋 Trip History"),
             ("new", "✨ New Adventure"),
         ]
-        
+
         for key, text in nav_items:
             btn = QPushButton(text)
             btn.setObjectName("nav_button")
@@ -213,21 +97,16 @@ class DashboardView(QWidget):
             btn.clicked.connect(lambda checked, k=key: self.select_page(k))
             self.nav_buttons[key] = btn
             sidebar_layout.addWidget(btn)
-        
+
         # מרווח גמיש
         sidebar_layout.addStretch()
-        
+
         # מידע גרסה (אופציונלי)
         version_label = QLabel("v1.0.0")
         version_label.setAlignment(Qt.AlignCenter)
-        version_label.setStyleSheet("""
-            color: rgba(255, 255, 255, 0.4);
-            font-size: 12px;
-            padding: 20px;
-        """)
         sidebar_layout.addWidget(version_label)
-        
-        root_layout.addWidget(sidebar_frame)
+
+        root_layout.insertWidget(0, sidebar_frame)  # ודא שהסיידבר ראשון בלייאאוט
 
     def create_modern_main_content(self, root_layout):
         """יצירת אזור התוכן הראשי המודרני"""
@@ -239,42 +118,19 @@ class DashboardView(QWidget):
 
         # כותרת דף דינמית
         self.page_title = QLabel("Current Trip")
-        self.page_title.setStyleSheet("""
-            font-size: 32px;
-            font-weight: 700;
-            color: #2d3748;
-            margin-bottom: 10px;
-            letter-spacing: -0.5px;
-        """)
         main_layout.addWidget(self.page_title)
 
         # תת-כותרת דף
         self.page_subtitle = QLabel("Manage your current travel plans")
-        self.page_subtitle.setStyleSheet("""
-            font-size: 16px;
-            color: #718096;
-            margin-bottom: 20px;
-        """)
         main_layout.addWidget(self.page_subtitle)
 
         # קו מפריד
         divider = QFrame()
         divider.setFrameShape(QFrame.HLine)
-        divider.setStyleSheet("""
-            background-color: #e2e8f0;
-            max-height: 1px;
-            margin: 0 0 20px 0;
-        """)
         main_layout.addWidget(divider)
 
         # Stack של הדפים
         self.content_stack = QStackedWidget()
-        self.content_stack.setStyleSheet("""
-            QStackedWidget {
-                background-color: transparent;
-                border: none;
-            }
-        """)
 
         # יוצרים רק את שני המסכים הראשיים כרגע
         self.pages = {
@@ -332,6 +188,7 @@ class DashboardView(QWidget):
     def resizeEvent(self, event):
         """טיפול בשינוי גודל החלון"""
         super().resizeEvent(event)
+        self.bg_label.setGeometry(self.rect())
         self.position_ai_button()
         self.ai_button.raise_()
 
@@ -384,12 +241,6 @@ class DashboardView(QWidget):
         dialog = QDialog(self)
         dialog.setWindowTitle("AI Assistant")
         dialog.setMinimumSize(600, 700)
-        dialog.setStyleSheet("""
-            QDialog {
-                background-color: #ffffff;
-                border-radius: 20px;
-            }
-        """)
         
         layout = QVBoxLayout(dialog)
         layout.setContentsMargins(0, 0, 0, 0)

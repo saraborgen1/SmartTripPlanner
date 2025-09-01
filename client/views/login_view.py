@@ -1,15 +1,13 @@
 # # client/views/login_view.py
 
 from PySide6.QtWidgets import (
-    QWidget, QLabel, QLineEdit, QPushButton, QVBoxLayout, QMessageBox, QGraphicsView, QGraphicsScene
+    QWidget, QLabel, QLineEdit, QPushButton, QVBoxLayout, QMessageBox
 )
-from PySide6.QtCore import Qt, QUrl
-from PySide6.QtMultimedia import QMediaPlayer, QAudioOutput
-from PySide6.QtMultimediaWidgets import QGraphicsVideoItem
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QMovie
 
 from client.presenters.login_presenter import LoginPresenter
 # from client.utils.ai_button import add_ai_button
-
 
 class LoginView(QWidget):
     def __init__(self, go_to_main_view_callback, go_to_register_view_callback=None, session_manager=None):
@@ -21,32 +19,24 @@ class LoginView(QWidget):
         self.presenter = LoginPresenter(self, session_manager)
         self.go_to_main_view = go_to_main_view_callback
 
-        # ווידאו כרקע עם שקיפות
-        self.scene = QGraphicsScene(self)
-        self.view = QGraphicsView(self.scene, self)
-        self.view.setGeometry(self.rect())
-        self.view.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        self.view.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        self.view.setFrameShape(QGraphicsView.NoFrame)
-        self.view.setStyleSheet("background: transparent; border: none;")
+        # רקע GIF מונפש
+        self.bg_label = QLabel(self)
+        self.bg_label.setGeometry(self.rect())
+        self.bg_label.setScaledContents(True)
+        self.bg_label.lower()
 
-        self.video_item = QGraphicsVideoItem()
-        self.video_item.setOpacity(0.9)  # שקיפות הווידאו
-        self.scene.addItem(self.video_item)
-
-        self.media_player = QMediaPlayer(self)
-        self.media_player.setVideoOutput(self.video_item)
-        self.audio_output = QAudioOutput()
-        self.media_player.setAudioOutput(self.audio_output)
-        self.media_player.setSource(QUrl.fromLocalFile("client/assets/background.mp4"))
-        self.media_player.play()
-        self.media_player.mediaStatusChanged.connect(self.handle_loop)
+        self.movie = QMovie("client/assets/background.gif")
+        self.movie.setCacheMode(QMovie.CacheAll)
+        self.movie.setSpeed(100)
+        self.bg_label.setMovie(self.movie)
+        self.movie.start()
 
         # overlay שקוף עם טופס הלוגין
         self.overlay = QWidget(self)
         self.overlay.setStyleSheet("background: transparent;")
         layout = QVBoxLayout(self.overlay)
         layout.setAlignment(Qt.AlignCenter)
+
 
         # # כפתור AI
         # add_ai_button(layout, lambda: self._ai_callback and self._ai_callback())
@@ -125,11 +115,9 @@ class LoginView(QWidget):
         self.password_input.returnPressed.connect(self.primary_button.click)
 
     def resizeEvent(self, event):
-        self.view.setGeometry(self.rect())
-        self.overlay.setGeometry(self.rect())
-        self.scene.setSceneRect(0, 0, self.width(), self.height())
-        self.video_item.setSize(self.rect().size())
-        super().resizeEvent(event)
+            self.bg_label.setGeometry(self.rect())
+            self.overlay.setGeometry(self.rect())
+            super().resizeEvent(event)
 
     # def set_ai_callback(self, cb):
     #     self._ai_callback = cb
