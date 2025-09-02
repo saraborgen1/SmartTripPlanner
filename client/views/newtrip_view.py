@@ -9,40 +9,38 @@ from PySide6.QtCore import QDate, Qt, QSize, QPointF
 from PySide6.QtGui import QPixmap, QFont, QPainter, QIcon
 from PySide6.QtCharts import QChart, QChartView, QLineSeries, QValueAxis, QCategoryAxis
 
-
 from client.presenters.newtrip_presenter import NewTripPresenter
 from client.utils.ai_button import add_ai_button
 
-
+"""כרטיס אטרקציה מודרני שמציג אתר תיירות יחיד"""
 class SiteCard(QFrame):
-    """כרטיס אטרקציה מודרני"""
     
     def __init__(self, site_data, index, parent_view):
         super().__init__()
-        self.site_data = site_data
-        self.index = index
-        self.parent_view = parent_view
+        self.site_data = site_data      # המידע על האתר (שם, קטגוריה, תמונה וכו')
+        self.index = index              # המיקום שלו ברשימת האתרים
+        self.parent_view = parent_view  # הפניה למסך הראשי כדי לעדכן ממנו
         
-        # עיצוב הכרטיס
+        # עיצוב כללי של הכרטיס
         self.setFrameStyle(QFrame.StyledPanel)
         self.setMinimumHeight(120)
         self.setMaximumHeight(140)
         self.setCursor(Qt.PointingHandCursor)
         
-        # Layout האופקי הראשי
+        # Layout ראשי אופקי (תמונה + טקסט + כפתור)
         main_layout = QHBoxLayout(self)
         main_layout.setContentsMargins(12, 12, 12, 12)
         main_layout.setSpacing(12)
         
-        # תמונה (משמאל)
+        # 📷 תמונה משמאל (אם אין - יוצג אייקון ברירת מחדל)
         self.image_label = QLabel()
         self.image_label.setFixedSize(80, 80)
         self.image_label.setAlignment(Qt.AlignCenter)
-        self.image_label.setText("📷")  # placeholder
+        self.image_label.setText("📷")  
         self.image_label.setScaledContents(True)
         main_layout.addWidget(self.image_label)
         
-        # אזור הטקסט (באמצע)
+        # טקסט באמצע: שם האתר, קטגוריה, דירוג, מסלול
         text_layout = QVBoxLayout()
         text_layout.setSpacing(4)
         
@@ -50,7 +48,7 @@ class SiteCard(QFrame):
         name = place.get("name", "Unnamed Site")
         category = place.get("category", "Unknown")
         
-        # כותרת
+        # שם האתר (כותרת מודגשת)
         title_label = QLabel(name)
         title_font = QFont()
         title_font.setPointSize(14)
@@ -63,19 +61,18 @@ class SiteCard(QFrame):
         category_label = QLabel(f"📍 {category}")
         text_layout.addWidget(category_label)
         
-        # דירוג (אם קיים)
+        # דירוג (אם קיים - נציג כוכבים)
         rating = place.get("rating")
         if rating:
             try:
                 numeric_rating = float(str(rating).replace("h", "").strip())
                 rating_text = "⭐" * min(int(numeric_rating), 5)
             except (ValueError, TypeError):
-                rating_text = "⭐" * 0  # אין דירוג תקין
-
+                rating_text = "⭐" * 0  
             rating_label = QLabel(f"{rating_text} ({rating})")
             text_layout.addWidget(rating_label)
         
-        # מידע מסלול
+        # מידע על מסלול (מרחק + זמן)
         route = site_data.get("route", {})
         if route.get("routes"):
             segments = route["routes"][0].get("segments", [])
@@ -88,48 +85,37 @@ class SiteCard(QFrame):
         text_layout.addStretch()
         main_layout.addLayout(text_layout, stretch=1)
         
-        # כפתור הוספה (מימין)
-     
+        # כפתור ➕/✔️ להוספה או הסרה     
         self.add_btn = QPushButton(self)
-        self.add_btn.setIcon(QIcon("client/assets/plus.png"))  # פלוס מתוך הקובץ המקומי
+        self.add_btn.setIcon(QIcon("client/assets/plus.png")) 
         self.add_btn.setIconSize(QSize(24, 24))
         self.add_btn.setFixedSize(40, 40)
-
         self.add_btn.clicked.connect(self._toggle_site)
         main_layout.addWidget(self.add_btn, 0, Qt.AlignRight | Qt.AlignVCenter)
 
-        
-        # טעינת תמונה
+        # טעינת תמונה אמיתית (אם יש URL)
         self._load_image()
     
+
+    """ניסיון טעינת תמונה מתוך ה־URL אם קיים"""
     def _load_image(self):
-        """
-        טעינת תמונה בצורה בטוחה עם תמיכה במבנה:
-        place['image'] = { 'url': <str>, 'headers': <dict-optional> }
-        כמו כן תומך גם במחרוזת URL ישירה לנוחות לאחור.
-        """
+
         place = self.site_data.get("place", {})
         image_info = place.get("image")
-
         if not image_info:
             self._set_default_image()
             return
-
         try:
             import requests
-
-            # תומך גם במחרוזת ישירה וגם ב־dict
             if isinstance(image_info, dict):
                 url = image_info.get("url")
                 headers = image_info.get("headers", {})
             else:
                 url = str(image_info)
                 headers = {}
-
             if not url:
                 self._set_default_image()
                 return
-
             resp = requests.get(url, headers=headers, timeout=10)
             if resp.status_code == 200:
                 pixmap = QPixmap()
@@ -138,18 +124,16 @@ class SiteCard(QFrame):
                     self.image_label.setPixmap(scaled)
                     self.image_label.setText("")
                     return
-
-            # אם הגענו לכאן – נכשל
             self._set_default_image()
         except Exception as e:
             print(f"[ERROR] image load failed: {e}")
             self._set_default_image()
 
 
+    """מציב תמונת ברירת מחדל אם אין תמונה זמינה"""
     def _set_default_image(self):
-        """מציב תמונת ברירת מחדל אם אין תמונה זמינה"""
+
         try:
-            # אם יש תמונת ברירת מחדל בתיקיית הנכסים
             default_path = "client/assets/default_image.png"
             pixmap = QPixmap(default_path)
             if not pixmap.isNull():
@@ -158,32 +142,27 @@ class SiteCard(QFrame):
                 )
                 self.image_label.setText("")
             else:
-                # fallback: אם אין קובץ תמונה, מציג את האייקון 📷
                 self.image_label.setText("📷")
         except Exception:
-            # fallback נוסף במקרה של בעיות בטעינת התמונה
             self.image_label.setText("📷")
 
     
+    """לחיצה על כפתור ➕ / ✔️ כדי להוסיף או להסיר מהרשימה"""
     def _toggle_site(self):
+
         place = self.site_data.get("place", {})
         name = place.get("name", "Unnamed Site")
-
+        # אם כבר קיים ברשימה → מסירים
         if name in [self.parent_view.my_sites_list.item(i).text().replace("📍 ", "") 
                     for i in range(self.parent_view.my_sites_list.count())]:
-            # אם כבר קיים → נסיר
             items = self.parent_view.my_sites_list.findItems(f"📍 {name}", Qt.MatchExactly)
             for item in items:
                 row = self.parent_view.my_sites_list.row(item)
                 self.parent_view.my_sites_list.takeItem(row)
-
-            # חזרה למצב פלוס סגול
             self.add_btn.setIcon(QIcon("client/assets/plus.png"))
+        # מוסיפים לרשימה
         else:
-            # מוסיפים לרשימה
             self.parent_view.add_site_to_my_list(name)
-
-            # מעבר למצב וי ירוק
             self.add_btn.setIcon(QIcon("client/assets/check.png"))
             self.add_btn.setStyleSheet("""
                             QPushButton {
@@ -196,15 +175,15 @@ class SiteCard(QFrame):
                         """)
 
     
+    """לחיצה על כל הכרטיס → פתיחת חלון פרטים מלאים"""
     def mousePressEvent(self, event):
-        """טיפול בלחיצה על הכרטיס - פתיחת פרטים"""
         if event.button() == Qt.LeftButton:
             self.parent_view.presenter.show_site_details(self.index)
         super().mousePressEvent(event)
 
 
+"""ווידג'ט להצגת תחזית מזג אוויר"""
 class WeatherWidget(QWidget):
-    """ווידג'ט מזג אוויר מעוצב"""
     
     def __init__(self):
         super().__init__()
@@ -222,49 +201,47 @@ class WeatherWidget(QWidget):
         title.setFont(title_font)
         layout.addWidget(title)
         
-        # אזור התוכן
+        # אזור תוכן (שיתעדכן כל פעם מחדש)
         self.content_widget = QWidget()
         self.content_layout = QVBoxLayout(self.content_widget)
-        layout.addWidget(self.content_widget, 1)  # נותן לתוכן להתרחב לגובה
-        # מחק את שורת addStretch()
-        # אופציונלי, כדי שלא יהיו רווחים מיותרים:
+        layout.addWidget(self.content_widget, 1)  
         self.content_layout.setContentsMargins(0, 0, 0, 0)
         self.content_layout.setSpacing(8)
 
     
+    """עדכון התחזית על המסך לפי נתונים מהשרת"""
     def update_weather(self, forecast_data):
-        """עדכון תצוגת מזג האוויר"""
         # ניקוי תוכן קיים
         for i in reversed(range(self.content_layout.count())):
             self.content_layout.itemAt(i).widget().setParent(None)
-        
+        # אם יש שגיאה
         if not forecast_data or "error" in forecast_data:
-            error_msg = forecast_data.get("error", "No weather data available") if forecast_data else "No weather data available"
+            if forecast_data:
+                error_msg = forecast_data.get("error", "No weather data available")
+            else:
+                error_msg = "No weather data available"
             error_label = QLabel(f"❌ {error_msg}")
             self.content_layout.addWidget(error_label)
             return
-        
+        # שם יעד
         dest = forecast_data.get("destination", "Unknown Location")
         location_label = QLabel(f"📍 {dest}")
         self.content_layout.addWidget(location_label)
         
-        # יצירת כרטיסי מזג אוויר
+        # הוספת גרף תחזית
         forecast_list = forecast_data.get("forecast", [])
         if forecast_list:
             chart_view = WeatherChart(forecast_list[:7])
             self.content_layout.addWidget(chart_view)
-            # מוסיפים ScrollArea כדי שלא ייחתך במסכים קטנים
             scroll = QScrollArea()
             scroll.setWidgetResizable(True)
             scroll.setWidget(chart_view)
-
             self.content_layout.addWidget(scroll, 1)
 
 
-
-
+    """גרף טמפרטורות למספר ימים קדימה"""
     def _create_day_card(self, day_data):
-        """יצירת כרטיס יום"""
+
         card = QFrame()
         layout = QHBoxLayout(card)
         
@@ -272,14 +249,13 @@ class WeatherWidget(QWidget):
         date_str = day_data.get("date", "")
         date_label = QLabel(date_str)
         layout.addWidget(date_label)
-        
         layout.addStretch()
         
         # אייקון מזג אוויר (פשוט לעכשיו)
-        weather_icon = QLabel("☀️")  # ברירת מחדל - שמש
+        weather_icon = QLabel("☀️")  
         layout.addWidget(weather_icon)
         
-        # טמפרטורות
+        # שני קווים: מינימום ומקסימום
         temp_min = day_data.get("temp_min", "?")
         temp_max = day_data.get("temp_max", "?")
         temp_label = QLabel(f"{temp_min}° - {temp_max}°C")
@@ -287,26 +263,25 @@ class WeatherWidget(QWidget):
         
         return card
 
+
+"""גרף טמפרטורות למספר ימים קדימה"""
 class WeatherChart(QChartView):
+
     def __init__(self, forecast_list):
         super().__init__()
 
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-        self.setFixedHeight(250)  # גובה סביר, אפשר לשחק עם המספר
+        self.setFixedHeight(250)  
 
-        # סדרות
+        # שני קווים: מינימום ומקסימום
         series_min = QLineSeries(name="Min Temp")
         series_max = QLineSeries(name="Max Temp")
-
-        # צבעים שונים
         series_min.setColor(Qt.blue)
         series_max.setColor(Qt.red)
-
-        # סימנים על נקודות
         series_min.setPointsVisible(True)
         series_max.setPointsVisible(True)
 
-        # הוספת נקודות לפי ימים
+        # הוספת נקודות
         for i, day_data in enumerate(forecast_list):
             try:
                 temp_min = float(str(day_data.get("temp_min", 0)).replace("°", ""))
@@ -324,7 +299,7 @@ class WeatherChart(QChartView):
         chart.createDefaultAxes()
         chart.legend().setVisible(True)
 
-        # ציר X = ימים עם תוויות תאריכים
+        # ציר X עם שמות הימים
         axisX = QCategoryAxis()
         axisX.setTitleText("Day")
         for i, day_data in enumerate(forecast_list):
@@ -343,20 +318,21 @@ class WeatherChart(QChartView):
         self.setRenderHint(QPainter.Antialiasing)
 
 
+"""מסך יצירת טיול חדש: חיפוש אתרים, מזג אוויר, רשימה והערות"""
 class NewTripView(QWidget):
-    def __init__(self, username: str | None = None, back_callback=None, session_manager=None, on_save_callback=None):
+
+    def __init__(self, username: str | None = None, back_callback=None,
+             session_manager=None, on_save_callback=None):
+        
         super().__init__()
         self.username = username
         self.session_manager = session_manager
         self.presenter = NewTripPresenter(self, session_manager)
         self._ai_callback = None
         self.on_save_callback = on_save_callback  
-        self._back_btn = None   # נשמור כאן את הכפתור כדי שנוכל לשנות אותו אחר כך
-
-
+        self._back_btn = None   
 
         self.setWindowTitle("Create New Trip")
-
         self.setup_ui(back_callback)
         self.showMaximized()
 
@@ -374,15 +350,11 @@ class NewTripView(QWidget):
         title.setFont(title_font)
         main_layout.addWidget(title)
 
-        # כפתור Back (אם קיים)
+        # כפתור Back 
         if back_callback:
             self._back_btn = QPushButton("← Back")
             self._back_btn.clicked.connect(lambda: self._handle_back(back_callback))
             main_layout.addWidget(self._back_btn, alignment=Qt.AlignLeft)
-
-
-        # כפתור AI
-        # add_ai_button(main_layout, lambda: self._ai_callback and self._ai_callback())
 
         # תפריט ניווט
         nav_layout = QHBoxLayout()
@@ -394,14 +366,14 @@ class NewTripView(QWidget):
         self.btn_save_trip.setMinimumHeight(45)
         self.btn_save_trip.clicked.connect(self.on_save_trip)
 
-
+        # כל הכפתורים מתווספים ל־layout
         for btn in (self.btn_search, self.btn_weather, self.btn_list, self.btn_notes, self.btn_save_trip):
             btn.setCheckable(btn in (self.btn_search, self.btn_weather, self.btn_list, self.btn_notes))
             btn.setMinimumHeight(45)
             nav_layout.addWidget(btn)
         main_layout.addLayout(nav_layout)
 
-        # מסכים מוחלפים
+        #להחלפת מסכים (חיפוש, מזג אוויר, רשימה, הערות)
         self.stack = QStackedWidget()
         main_layout.addWidget(self.stack, stretch=1)
 
@@ -411,7 +383,7 @@ class NewTripView(QWidget):
         self._create_list_page()
         self._create_notes_page()
 
-        # חיבור ניווט
+        # חיבור כפתורי הניווט למעבר בין המסכים
         self.btn_search.clicked.connect(lambda: self.set_page(0))
         self.btn_weather.clicked.connect(lambda: self.set_page(1))
         self.btn_list.clicked.connect(lambda: self.set_page(2))
@@ -419,13 +391,17 @@ class NewTripView(QWidget):
         
         self.set_page(0)
 
-    def _handle_back(self, callback):
-        """ניקוי טופס וחזרה למסך הקודם"""
-        self.reset_form()   # מנקה את כל מה שהוזן
-        callback()          # מבצע את החזרה
 
+    """ניקוי טופס וחזרה למסך הקודם"""
+    def _handle_back(self, callback):
+
+        self.reset_form()  
+        callback()          
+
+
+    """יצירת עמוד החיפוש"""
     def _create_search_page(self):
-        """יצירת עמוד החיפוש"""
+
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
         scroll.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
@@ -440,11 +416,11 @@ class NewTripView(QWidget):
         form_frame = QFrame()
         form_layout = QVBoxLayout(form_frame)
 
-        # שדות הטופס
+        # יצירת השדות (עיר, כתובת, תאריכים, תחבורה)
         self._create_form_fields(form_layout)
         layout.addWidget(form_frame)
 
-        # אזור התוצאות
+        # כותרת "תוצאות"
         results_label = QLabel("Search Results")
         results_font = QFont()
         results_font.setPointSize(16)
@@ -452,39 +428,40 @@ class NewTripView(QWidget):
         results_label.setFont(results_font)
         layout.addWidget(results_label)
 
-        # אזור כרטיסי האטרקציות
+        # אזור התוצאות
         self.sites_container = QWidget()
         self.sites_layout = QVBoxLayout(self.sites_container)
         self.sites_layout.setSpacing(8)
         self.sites_container.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Maximum)
         layout.addWidget(self.sites_container)
 
-        # רווח בסוף כדי למנוע חיתוך
         layout.addStretch()
-
-        # הגדרת הדף בתוך ScrollArea
         scroll.setWidget(page)
         self.stack.addWidget(scroll)
 
 
+    """יוצר את שדות הטופס שבהם המשתמש ממלא פרטי טיול חדש:
+        עיר, כתובת התחלה, תאריכי התחלה וסיום, אמצעי תחבורה,
+        ולבסוף כפתור חיפוש אתרים.
+    """
     def _create_form_fields(self, layout):
-        """יצירת שדות הטופס"""
-        # עיר
+
+        # שדה להזנת עיר/אזור
         layout.addWidget(QLabel("Choose City/Region:"))
         self.city_entry = QLineEdit()
         self.city_entry.setPlaceholderText("e.g., Jerusalem, Tel Aviv, Haifa...")
         layout.addWidget(self.city_entry)
 
-        # כתובת התחלה
+        # שדה להזנת כתובת התחלה
         layout.addWidget(QLabel("Start Address:"))
         self.address_entry = QLineEdit()
         self.address_entry.setPlaceholderText("e.g., Jaffa St 1, Jerusalem")
         layout.addWidget(self.address_entry)
 
-        # תאריכים בשורה אחת
+        # יצירת לייאאוט אופקי לשדות תאריכים
         dates_layout = QHBoxLayout()
         
-        # תאריך התחלה
+        # בחירת תאריך התחלה
         start_layout = QVBoxLayout()
         start_layout.addWidget(QLabel("Start Date:"))
         self.start_entry = QDateEdit()
@@ -494,7 +471,7 @@ class NewTripView(QWidget):
         start_layout.addWidget(self.start_entry)
         dates_layout.addLayout(start_layout)
 
-        # תאריך סיום
+        # בחירת תאריך סיום
         end_layout = QVBoxLayout()
         end_layout.addWidget(QLabel("End Date:"))
         self.end_entry = QDateEdit()
@@ -506,52 +483,50 @@ class NewTripView(QWidget):
         end_layout.addWidget(self.end_entry)
         dates_layout.addLayout(end_layout)
 
+        # הוספת לייאאוט התאריכים כולו לטופס
         layout.addLayout(dates_layout)
 
-        # תחבורה
+        # בחירת אמצעי תחבורה
         layout.addWidget(QLabel("Transport Mode:"))
         self.transport_combo = QComboBox()
         self.transport_combo.addItems(["🚗 Car", "🚶 Walking", "🚴 Cycling"])
         layout.addWidget(self.transport_combo)
 
-        # כפתור חיפוש
+        # כפתור חיפוש אתרים
         self.create_btn = QPushButton("🔍 Search for Sites")
         self.create_btn.setMinimumHeight(50)
         self.create_btn.clicked.connect(self.on_create_trip)
         layout.addWidget(self.create_btn)
 
-        # קיצורי מקלדת
+        # קיצורי מקלדת: לחיצה על Enter מפעילה את החיפוש
         self.address_entry.returnPressed.connect(self.create_btn.click)
         self.city_entry.returnPressed.connect(self.create_btn.click)
 
+
+    # יצירת עמוד מזג אוויר
     def _create_weather_page(self):
+
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
-
         self.weather_widget = WeatherWidget()
         self.weather_widget.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-
         scroll.setWidget(self.weather_widget)
         self.stack.addWidget(scroll)
 
 
-        
-
-
-
+    # יצירת עמוד רשימת האטרקציות שנבחרו
     def _create_list_page(self):
-        """יצירת עמוד הרשימה"""
+
         container = QWidget()
         container_layout = QVBoxLayout(container)
         container_layout.setContentsMargins(0, 0, 0, 0)
         container_layout.setSpacing(10)
-
-        # ScrollArea עם רשימת האטרקציות
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
         scroll.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
         scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
 
+        # יצירת דף פנימי עם כותרת ורשימה
         page = QWidget()
         layout = QVBoxLayout(page)
         page.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
@@ -571,25 +546,23 @@ class NewTripView(QWidget):
 
         page.setLayout(layout)
         scroll.setWidget(page)
-
-        # הוספת Scroll לאזור הראשי
         container_layout.addWidget(scroll, stretch=1)
-
-        # הוספת הכל לסטאק
         self.stack.addWidget(container)
 
+
+    # יצירת עמוד הערות
     def _create_notes_page(self):
-        """יצירת עמוד הערות"""
+
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
         scroll.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
         scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-
         page = QWidget()
         layout = QVBoxLayout(page)
         layout.setSpacing(16)
         layout.setContentsMargins(16, 16, 16, 16)
 
+        # כותרת
         title = QLabel("Trip Notes")
         title_font = QFont()
         title_font.setPointSize(18)
@@ -597,6 +570,7 @@ class NewTripView(QWidget):
         title.setFont(title_font)
         layout.addWidget(title)
 
+        # תיבת טקסט לערות
         self.notes_edit = QTextEdit()
         self.notes_edit.setPlaceholderText("Write your ideas or notes for this trip here...")
         layout.addWidget(self.notes_edit, stretch=1)
@@ -605,15 +579,18 @@ class NewTripView(QWidget):
         self.stack.addWidget(scroll)
 
 
+    # מעבר בין עמודים
     def set_page(self, index: int):
-        """מעבר בין עמודים"""
+
         self.stack.setCurrentIndex(index)
         buttons = [self.btn_search, self.btn_weather, self.btn_list, self.btn_notes]
         for i, btn in enumerate(buttons):
             btn.setChecked(i == index)
 
+
+    # טיפול בלחיצה על כפתור חיפוש אתרים
     def on_create_trip(self):
-        """טיפול בבקשת חיפוש אטרקציות"""
+
         city = self.city_entry.text().strip()
         if not city:
             self.show_error("Please enter a city/destination.")
@@ -641,11 +618,13 @@ class NewTripView(QWidget):
             self.presenter.load_sites(city, address, profile, limit=20)
             self.presenter.update_weather(city)
         finally:
+            # מחזיר את הכפתור למצב רגיל
             self.create_btn.setEnabled(True)
             self.create_btn.setText("🔍 Search for Sites")
 
+
+    # הצגת רשימת האטרקציות שנמצאו
     def show_sites(self, sites: list[dict]):
-        """הצגת רשימת האטרקציות בכרטיסים"""
         # ניקוי תוצאות קודמות
         for i in reversed(range(self.sites_layout.count())):
             child = self.sites_layout.itemAt(i).widget()
@@ -668,12 +647,16 @@ class NewTripView(QWidget):
         spacer.setFixedHeight(40)
         self.sites_layout.addWidget(spacer)
 
+
+    # הצגת תחזית מזג אוויר
     def show_weather(self, forecast_data: dict | None):
-        """הצגת מזג אוויר"""
+
         self.weather_widget.update_weather(forecast_data)
 
+
+    # הוספת אטרקציה לרשימה האישית
     def add_site_to_my_list(self, site_name: str):
-        """הוספת אטרקציה לרשימה"""
+
         if not site_name:
             return
             
@@ -686,8 +669,10 @@ class NewTripView(QWidget):
         self.my_sites_list.addItem(f"📍 {site_name}")
         self.show_message(f"Added '{site_name}' to your list!")
 
+
+    # שמירת הטיול
     def on_save_trip(self):
-        """שמירת הטיול"""
+
         username = self.username or (
             self.session_manager.username if self.session_manager else None
         )
@@ -696,7 +681,8 @@ class NewTripView(QWidget):
         if not username or not token:
             self.show_error("No logged-in user detected. Please log in first.")
             return
-
+        
+        # איסוף אתרים שנבחרו
         selected_sites = []
         for i in range(self.my_sites_list.count()):
             item_text = self.my_sites_list.item(i).text()
@@ -707,6 +693,7 @@ class NewTripView(QWidget):
             self.show_error("Please add at least one site to your list.")
             return
 
+        # מיפוי אמצעי תחבורה
         mode_text = self.transport_combo.currentText()
         transport = {
             "🚗 Car": ["car"],
@@ -716,7 +703,7 @@ class NewTripView(QWidget):
 
         notes_text = self.notes_edit.toPlainText() if hasattr(self, "notes_edit") else ""
 
-        # 👇 נגדיר פונקציה שתקרה אחרי הצלחה
+        #  נגדיר פונקציה שתקרה אחרי הצלחה
         def on_success():
             self.reset_form()
             if self.on_save_callback:
@@ -724,7 +711,7 @@ class NewTripView(QWidget):
 
         trip_id = getattr(self, "current_trip_id", None)
 
-        # נעביר את ה־callback ל־presenter
+        # קריאה לשמירה דרך הפרזנטור
         self.presenter.save_trip(
             username=username,
             start=self.start_entry.date().toString("yyyy-MM-dd"),
@@ -737,37 +724,33 @@ class NewTripView(QWidget):
             trip_id=trip_id
         )
 
+
+    #כפתור Back - עדכון בזמן ריצה
     def set_back_callback(self, callback):
-        """עדכון פעולה של כפתור Back בזמן ריצה"""
+
         if self._back_btn:
             try:
                 self._back_btn.clicked.disconnect()
             except Exception:
                 pass
-            # נעטוף את הקריאה עם reset_form
             self._back_btn.clicked.connect(lambda: self._handle_back(callback))
 
 
-
-
-    def on_site_clicked(self, item):
-        """לא בשימוש - מוחלף בלחיצה על כרטיס"""
-        pass
-
+    # הצגת הודעות מידע למשתמש
     def show_message(self, msg: str):
-        """הצגת הודעת מידע"""
         QMessageBox.information(self, "Info", msg)
 
+    # הצגת הודעות שגיאה למשתמש
     def show_error(self, msg: str):
-        """הצגת הודעת שגיאה"""
         QMessageBox.critical(self, "Error", msg)
 
+    # הגדרת פונקציית AI שתקרה בלחיצה על כפתור AI
     def set_ai_callback(self, cb):
-        """הגדרת callback לכפתור AI"""
         self._ai_callback = cb
 
+    # איפוס כל שדות הטופס   
     def reset_form(self):
-        """איפוס כל שדות הטופס אחרי שמירת טיול"""
+
         # איפוס שדות טקסט
         self.city_entry.clear()
         self.address_entry.clear()
@@ -794,6 +777,7 @@ class NewTripView(QWidget):
         # חזרה לעמוד החיפוש כברירת מחדל
         self.set_page(0)
 
+    # טעינת טיול קיים לעריכה
     def load_trip(self, trip_data: dict):
         self.current_trip = trip_data
         self.current_trip_id = trip_data.get("id")

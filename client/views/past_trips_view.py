@@ -1,20 +1,21 @@
+# client/views/past_trips_view.py
+
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QLabel, QPushButton, QListWidget, QListWidgetItem, QHBoxLayout
 from PySide6.QtCore import Qt
 
-
+# ---------- תצוגת טיולים קודמים ----------
 class PastTripsView(QWidget):
-    """ View שאחראי להציג את מסך 'הטיולים שלי'. """
 
     def __init__(self):
         super().__init__()
-
+        # הגדרות חלון
         self.setWindowTitle("Smart Trip Planner - My Trips")
         self.setMinimumSize(560, 420)
 
-        # Layout ראשי
+        # לייאאוט ראשי אנכי
         root = QVBoxLayout()
 
-        # שורת כותרת + כפתורים
+        # לייאאוט עליון (כותרת + כפתורים)
         header = QHBoxLayout()
 
         # כותרת ראשית
@@ -27,8 +28,6 @@ class PastTripsView(QWidget):
         self.refresh_btn = QPushButton("Refresh")
         header.addWidget(self.refresh_btn, 0)
 
-        
-
         # הוספת שורת הכותרת ללייאאוט הראשי
         root.addLayout(header)
 
@@ -36,29 +35,35 @@ class PastTripsView(QWidget):
         self.trips_list = QListWidget()
         root.addWidget(self.trips_list)
 
-        # חיבור ה־Layout לחלון
+        # חיבור הלייאאוט הראשי למסך
         self.setLayout(root)
 
-    # ---------- מתודות עזר ----------
 
+    #עדכון הכותרת לשם המשתמש הנוכחי
     def set_username(self, username: str):
-        """עדכון הכותרת לשם המשתמש הנוכחי."""
+
         self.title.setText(f"My Trips — {username}")
 
+
+    # ניקוי כל הפריטים מהרשימה
     def clear_list(self):
-        """ניקוי כל הפריטים מהרשימה."""
+
         self.trips_list.clear()
 
+
+    # הוספת פריט חדש לרשימה
     def add_trip_item(self, text: str, trip_obj: dict):
-        """ מוסיף פריט חדש לרשימת הטיולים. """
+
         item = QListWidgetItem(text)
         item.setData(Qt.UserRole, trip_obj)
         self.trips_list.addItem(item)
 
+
+    # עדכון רשימת הטיולים בתצוגה
     def set_trips(self, trips: list):
-        """עדכון רשימת הטיולים בתצוגה לפי השדות הקיימים בלבד"""
+
         self.clear_list()
-        self.trips = []  # מאפסים את הרשימה לפני טעינת נתונים חדשים
+        self.trips = []  
 
         # אם אין טיולים כלל
         if not trips:
@@ -78,7 +83,7 @@ class PastTripsView(QWidget):
 
             self.trips.append(trip_data)
 
-            # מה שמוצג ברשימת התצוגה
+            # טקסט להצגה ברשימה
             display_text = (
                 f"Dates: {trip_data['start_date']} → {trip_data['end_date']} | "
                 f"Sites: {', '.join(trip_data['selected_sites']) if trip_data['selected_sites'] else 'None'} | "
@@ -86,7 +91,9 @@ class PastTripsView(QWidget):
                 f"Weather: {trip_data['weather'] if trip_data['weather'] else 'N/A'} | "
                 f"Notes: {trip_data['notes'] if trip_data['notes'] else 'None'}"
             )
-            self.trips_list.addItem(QListWidgetItem(display_text))
+            item = QListWidgetItem(display_text)
+            item.setData(Qt.UserRole, trip_data)   
+            self.trips_list.addItem(item)
 
         # עדכון טבלה במידה ויש כזו
         if hasattr(self, "update_trips_table"):

@@ -1,20 +1,23 @@
+#client/views/dashboard_view.py
+
+# הקובץ הזה מגדיר את המחלקה הראשית –
+# DashboardView –
+# שהיא הממשק הגרפי  של לוח הבקרה.
+# כאן נבנים כל רכיבי המסך הראשי:
+# Sidebar (תפריט צדי),
+# Main Content (תוכן מרכזי),
+# וכפתור צף (Floating Button).
 
 from PySide6.QtWidgets import (
     QWidget, QHBoxLayout, QVBoxLayout, QPushButton, QLabel,
-    QStackedWidget, QFrame, QDialog, QScrollArea, QGraphicsDropShadowEffect
+    QStackedWidget, QFrame, QDialog, QGraphicsDropShadowEffect, QSizePolicy
 )
-from PySide6.QtCore import Qt, QPropertyAnimation, QEasingCurve, QRect
-from PySide6.QtGui import QColor, QFont
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QColor, QPixmap
 
-# ייבוא דפי תוכן
 from client.views.currenttrip_view import CurrentTripView
 from client.views.past_trips_view import PastTripsView
-from client.views.newtrip_view import NewTripView
 from client.views.ai_consult_view import AIChatView
-from PySide6.QtWidgets import QSizePolicy
-from PySide6.QtWidgets import QLabel
-from PySide6.QtGui import QPixmap
-
 
 class DashboardView(QWidget):
     def __init__(self):
@@ -24,29 +27,27 @@ class DashboardView(QWidget):
 
         # --- הוספת רקע תמונה ---
         self.bg_label = QLabel(self)
-        self.bg_label.setPixmap(QPixmap("client/assets/background.png"))  # שימי כאן את הנתיב שלך
+        self.bg_label.setPixmap(QPixmap("client/assets/background.png"))  
         self.bg_label.setScaledContents(True)
         self.bg_label.setGeometry(self.rect())
-        self.bg_label.lower()  # שיהיה מאחורי הכל
+        self.bg_label.lower()  
         
         # אפקט מעבר עמודים
         self.page_animation = None
         
-        # Layout ראשי
+        # יצירת 
+        # Layout 
+        # ראשי 
         root_layout = QHBoxLayout(self)
         root_layout.setContentsMargins(0, 0, 0, 0)
         root_layout.setSpacing(0)
         
-        # יצירת התפריט הצדי
+        # קריאה לפונקציות עזר שמרכיבות את המבנה
         self.create_modern_sidebar(root_layout)
-        
-        # יצירת אזור התוכן הראשי
         self.create_modern_main_content(root_layout)
-        
-        # כפתור AI צף מודרני
         self.create_modern_floating_ai_button()
         
-        # התחלה עם דף נוכחי
+        # התחלה עם דף ברירת מחדל –
         self.current_page = None
         self.select_page("current")
 
@@ -54,7 +55,7 @@ class DashboardView(QWidget):
         # יצירת תפריט צדי מודרני
         sidebar_frame = QFrame()
         sidebar_frame.setObjectName("modern_sidebar")
-        sidebar_frame.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)  # חשוב!
+        sidebar_frame.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)  
         sidebar_layout = QVBoxLayout(sidebar_frame)
         sidebar_layout.setContentsMargins(0, 0, 0, 0)
         sidebar_layout.setSpacing(0)
@@ -98,7 +99,7 @@ class DashboardView(QWidget):
             self.nav_buttons[key] = btn
             sidebar_layout.addWidget(btn)
 
-        # מרווח גמיש
+        #כדי לדחוף את הכפתורים למעלה
         sidebar_layout.addStretch()
 
         # מידע גרסה (אופציונלי)
@@ -106,10 +107,12 @@ class DashboardView(QWidget):
         version_label.setAlignment(Qt.AlignCenter)
         sidebar_layout.addWidget(version_label)
 
-        root_layout.insertWidget(0, sidebar_frame)  # ודא שהסיידבר ראשון בלייאאוט
+        root_layout.insertWidget(0, sidebar_frame)  
 
+
+    """יצירת אזור התוכן הראשי המודרני"""
     def create_modern_main_content(self, root_layout):
-        """יצירת אזור התוכן הראשי המודרני"""
+
         main_frame = QFrame()
         main_frame.setObjectName("main_content_frame")
         main_layout = QVBoxLayout(main_frame)
@@ -142,13 +145,14 @@ class DashboardView(QWidget):
         # הוספת הדפים הקיימים ל־stack
         self.content_stack.addWidget(self.pages["current"])
         self.content_stack.addWidget(self.pages["past"])
-
         main_layout.addWidget(self.content_stack, stretch=1)
         root_layout.addWidget(main_frame, stretch=1)
 
-
+    """יצירת כפתור 
+    AI
+    צף מודרני עם אפקטים"""
     def create_modern_floating_ai_button(self):
-        """יצירת כפתור AI צף מודרני עם אפקטים"""
+       
         self.ai_button = QPushButton("🤖")
         self.ai_button.setObjectName("ai_floating_btn")
         self.ai_button.setParent(self)
@@ -167,35 +171,36 @@ class DashboardView(QWidget):
         self.ai_button.raise_()
 
 
-
     def position_ai_button(self):
         """מיקום הכפתור הצף"""
         margin = 30
         size = self.ai_button.width()
         main_window = self.window()
         if main_window:
-            # מחשבים לפי הגודל הכולל של החלון
             x = main_window.width() - size - margin
             y = main_window.height() - size - margin
         else:
-            # fallback אם אין MainWindow
             x = self.width() - size - margin
             y = self.height() - size - margin
 
         self.ai_button.move(x, y)
         self.ai_button.raise_()
 
+
+    # טיפול בשינוי גודל חלון –
+    # עדכון רקע + מיקום כפתור AI
     def resizeEvent(self, event):
-        """טיפול בשינוי גודל החלון"""
+       
         super().resizeEvent(event)
         self.bg_label.setGeometry(self.rect())
         self.position_ai_button()
         self.ai_button.raise_()
 
 
-    
+    # מעבר לדף חדש לפי מפתח –
+    # current, past, new
     def select_page(self, page_key):
-
+        
         if page_key == "new" and self.pages["new"] is None:
             from client.utils.session import SessionManager
             from client.views.newtrip_view import NewTripView
@@ -222,22 +227,26 @@ class DashboardView(QWidget):
             self.page_title.setText(title)
             self.page_subtitle.setText(subtitle)
 
-        # ✅ מעבר בעזרת ה־Widget עצמו ולא אינדקס
         self.content_stack.setCurrentWidget(self.pages[page_key])
         self.current_page = page_key
 
-
+        
+    """עדכון שם המשתמש"""
     def set_username(self, username: str):
-        """עדכון שם המשתמש"""
+
         self.welcome_label.setText(f"Welcome, {username}")
 
+
+    """הגדרת קריאה חוזרת לכפתור AI"""
     def set_ai_callback(self, callback):
-        """הגדרת קריאה חוזרת לכפתור AI"""
-        self.ai_button.clicked.disconnect()  # ניתוק חיבור קודם
+        
+        self.ai_button.clicked.disconnect()  
         self.ai_button.clicked.connect(callback)
 
+
+    """פתיחת דיאלוג AI מעוצב"""
     def open_ai_dialog(self):
-        """פתיחת דיאלוג AI מעוצב"""
+
         dialog = QDialog(self)
         dialog.setWindowTitle("AI Assistant")
         dialog.setMinimumSize(600, 700)
@@ -250,9 +259,11 @@ class DashboardView(QWidget):
         
         dialog.exec()
 
+    # פתיחת מסך 
+    # New Trip 
+    # עם נתוני טיול לעריכה
     def handle_edit_trip(self, trip_data):
-        """פותח את מסך New Adventure עם נתוני הטיול לעריכה"""
-        # אם עדיין לא נוצר מסך new → ניצור אותו
+      
         if self.pages["new"] is None:
             from client.utils.session import SessionManager
             from client.views.newtrip_view import NewTripView
@@ -261,10 +272,7 @@ class DashboardView(QWidget):
             self.pages["new"] = NewTripView(username=username, session_manager=session)
             self.content_stack.addWidget(self.pages["new"])
 
-        # קודם נטען את הנתונים לטופס
         self.pages["new"].load_trip(trip_data)
-
-        # ורק אז נעבור לעמוד
         self.select_page("new")
 
      

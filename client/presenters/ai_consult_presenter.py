@@ -1,30 +1,30 @@
 # client/presenters/ai_consult_presenter.py
 
+# הקובץ הזה מגדיר מחלקה בשם
+# AIChatPresenter
+# שתפקידה לחבר בין שכבת ה־
+# View
+# (הממשק הגרפי)
+# לבין שכבת השירות –
+# api_client –
+# ששולחת שאלות ל־
+# AI
+# ומחזירה תשובות.
 import requests
 from client.services import api_client
 
-
 class AIChatPresenter:
-    """
-    מחלקה שאחראית על החיבור בין ה־
-    View  
-    (הממשק הגרפי)
-
-    לבין השירות  
-    api_client  
-
-    ששולח שאלה אל ה־
-    AI  
-    ומחזיר תשובה.
-    """
 
     def __init__(self, view):
+
         # שמירה של ה־
         # View  
         # כדי שנוכל לגשת לשדות ולכפתורים שבו
         self.view = view
 
-        # חיבור הכפתור "Send" מה־
+        # חיבור הכפתור 
+        # "Send" 
+        # מה־
         # View  
         # אל הפונקציה  
         # on_send
@@ -35,13 +35,13 @@ class AIChatPresenter:
         # בתוך שדה הקלט — זה ישלח
         self.view.input.returnPressed.connect(self.on_send)
 
-    def on_send(self):
-        """
-        פונקציה שנקראת כאשר המשתמש לוחץ על כפתור "שלח"
-        או מקיש על מקש  
-        Enter.
-        """
 
+    """
+        פונקציה שנקראת כאשר המשתמש לוחץ על כפתור שלח או מקיש על מקש  
+        Enter.
+    """
+    def on_send(self):
+     
         # לוקח את הטקסט משדה הקלט  
         # input  
         # ומוריד רווחים מיותרים
