@@ -240,7 +240,7 @@ class DashboardView(QWidget):
         """פתיחת דיאלוג AI מעוצב"""
         dialog = QDialog(self)
         dialog.setWindowTitle("AI Assistant")
-        dialog.setMinimumSize(600, 700)
+        dialog.setMinimumSize(1200, 800)
         
         layout = QVBoxLayout(dialog)
         layout.setContentsMargins(0, 0, 0, 0)

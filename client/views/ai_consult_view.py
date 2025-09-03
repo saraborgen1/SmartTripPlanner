@@ -5,6 +5,7 @@ from PySide6.QtWidgets import (
     QTextEdit, QLineEdit, QPushButton
 )
 from PySide6.QtCore import Qt
+from PySide6.QtGui import QPixmap
 
 
 class AIChatView(QWidget):
@@ -25,8 +26,15 @@ class AIChatView(QWidget):
     def __init__(self, back_callback):
         super().__init__()
         self.setWindowTitle("Smart Trip Planner - AI Assistant")
-        self.setMinimumSize(560, 420)
+        self.setMinimumSize(1200, 800)
 
+        # --- הוספת רקע תמונה ---
+        self.bg_label = QLabel(self)
+        self.bg_label.setPixmap(QPixmap("client/assets/background.png"))  # שימי כאן את הנתיב שלך
+        self.bg_label.setScaledContents(True)
+        self.bg_label.setGeometry(self.rect())
+        self.bg_label.lower()  # שיהיה מאחורי הכל
+        
         # Layout ראשי אנכי
         root = QVBoxLayout()
 
@@ -101,3 +109,11 @@ class AIChatView(QWidget):
         """
         self.input.setEnabled(enabled)
         self.send_btn.setEnabled(enabled)
+        
+    def resizeEvent(self, event):
+      """
+      עדכון גודל תמונת הרקע כשהחלון משנה גודל
+      """
+      super().resizeEvent(event)
+      if hasattr(self, 'bg_label'):
+          self.bg_label.setGeometry(self.rect())
