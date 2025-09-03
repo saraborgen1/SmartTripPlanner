@@ -3,7 +3,7 @@
    Applied to all QWidget elements
    ========================= */
 QWidget {
-    background-color: transparent;
+    background-color: #e6f4faf7;   /* תכלת בהיר ונעים */
     font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
     color: #2d3748;
     font-size: 14px;
@@ -229,7 +229,7 @@ QListWidget::item:selected {
    General container styling
    ========================= */
 QFrame, QGroupBox, .QFrame, .QWidget#centralWidget {
-    background: rgba(255,255,255,0.3);
+    background: #e6f4faf7;
     border-radius: 16px;
 }
 
@@ -360,7 +360,7 @@ QDialog {
 }
 
 QDialog QWidget {
-    background-color: transparent;
+    background-color: #e6f4faf7;
 }
 
 /* =========================

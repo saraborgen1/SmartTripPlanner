@@ -30,12 +30,12 @@ class AIChatView(QWidget):
         self.setWindowTitle("Smart Trip Planner - AI Assistant")
         self.setMinimumSize(1200, 800)
 
-        # --- הוספת רקע תמונה ---
-        self.bg_label = QLabel(self)
-        self.bg_label.setPixmap(QPixmap("client/assets/background.png"))  # שימי כאן את הנתיב שלך
-        self.bg_label.setScaledContents(True)
-        self.bg_label.setGeometry(self.rect())
-        self.bg_label.lower()  # שיהיה מאחורי הכל
+        # # --- הוספת רקע תמונה ---
+        # self.bg_label = QLabel(self)
+        # self.bg_label.setPixmap(QPixmap("client/assets/background.png"))  # שימי כאן את הנתיב שלך
+        # self.bg_label.setScaledContents(True)
+        # self.bg_label.setGeometry(self.rect())
+        # self.bg_label.lower()  # שיהיה מאחורי הכל
         
         # Layout ראשי אנכי
         root = QVBoxLayout()
@@ -107,12 +107,11 @@ class AIChatView(QWidget):
       self.input.setEnabled(enabled)
       self.send_btn.setEnabled(enabled)
 
-        enabled –
-        bool
-        האם לאפשר אינטראקציה (True) או לנעול (False).
-        """
-        self.input.setEnabled(enabled)
-        self.send_btn.setEnabled(enabled)
+        # bool
+        # האם לאפשר אינטראקציה (True) או לנעול (False).
+        # """
+      self.input.setEnabled(enabled)
+      self.send_btn.setEnabled(enabled)
         
     def resizeEvent(self, event):
       """
