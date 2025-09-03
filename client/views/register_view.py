@@ -4,19 +4,11 @@ from PySide6.QtWidgets import (
 )
 from client.presenters.register_presenter import RegisterPresenter
 
-
+# ---------- מסך הרשמה למשתמש חדש ----------
 class RegisterView(QWidget):
-    """
-    View שאחראי על מסך ההרשמה.
-
-    כולל:
-    - שדות קלט לשם משתמש ולסיסמה
-    - כפתור הרשמה
-    - כפתור חזרה למסך ההתחברות
-    - חיבור ל־Presenter שמבצע את ההרשמה בפועל מול השרת
-    """
 
     def __init__(self, go_to_login_callback):
+
         super().__init__()
         self.setWindowTitle("Register")
 
@@ -29,28 +21,23 @@ class RegisterView(QWidget):
 
         # ---------- רכיבי טופס ----------
         # שדה שם משתמש
-        # QLineEdit
         self.username_input = QLineEdit()
         self.username_input.setPlaceholderText("Username")
 
         # שדה סיסמה (עם מצב סיסמה מוסתרת)
-        # QLineEdit
         self.password_input = QLineEdit()
         self.password_input.setPlaceholderText("Password")
         self.password_input.setEchoMode(QLineEdit.Password)
 
         # כפתור הרשמה
-        # QPushButton
         self.register_button = QPushButton("Sign Up")
         self.register_button.clicked.connect(self._register)
 
         # כפתור חזרה למסך התחברות
-        # QPushButton
         self.back_button = QPushButton("Back to Login")
         self.back_button.clicked.connect(self.go_to_login_callback)
 
         # ---------- פריסת המסך ----------
-        # QVBoxLayout
         layout = QVBoxLayout()
         layout.addWidget(QLabel("Register"))
         layout.addWidget(self.username_input)
@@ -60,25 +47,21 @@ class RegisterView(QWidget):
 
         self.setLayout(layout)
 
-    # ---------- לוגיקה פנימית ----------
 
+    #פונקציה שמופעלת בעת לחיצה על כפתור ההרשמה
     def _register(self):
-        """
-        פונקציה שמופעלת בעת לחיצה על כפתור ההרשמה.
-        שולפת את השם והסיסמה ומעבירה ל־Presenter.
-        """
+    
         username = self.username_input.text()
         password = self.password_input.text()
         self.presenter.register_user(username, password)
 
+
+    # פונקציות להצגת הודעות למשתמש
     def show_message(self, title, message):
-        """
-        מציג הודעת הצלחה/מידע למשתמש.
-        """
+      
         QMessageBox.information(self, title, message)
 
+    #פונקציה להצגת הודעת שגיאה
     def show_error(self, message):
-        """
-        מציג הודעת שגיאה למשתמש.
-        """
+     
         QMessageBox.critical(self, "Error", message)

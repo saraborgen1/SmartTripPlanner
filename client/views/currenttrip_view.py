@@ -3,6 +3,8 @@ from PySide6.QtWidgets import QWidget, QVBoxLayout, QLabel, QPushButton, QTextEd
 from PySide6.QtCore import Qt
 
 class CurrentTripView(QWidget):
+
+    # View להצגת הטיול הנוכחי של המשתמש
     def __init__(self, edit_trip_callback=None):
         super().__init__()
         
@@ -18,7 +20,7 @@ class CurrentTripView(QWidget):
         self.title.setAlignment(Qt.AlignCenter)
         layout.addWidget(self.title)
 
-        # -------- יצירת כרטיס (Card) שיכיל גם את הטקסט וגם את הכפתור --------
+        # יצירת כרטיס (Card) מסגרת יפה להצגת פרטי הטיול + כפתור
         trip_card = QFrame()
         trip_card.setStyleSheet("""
             QFrame {
@@ -31,7 +33,7 @@ class CurrentTripView(QWidget):
         card_layout.setContentsMargins(12, 12, 12, 12)
         card_layout.setSpacing(10)
 
-        # תיבת טקסט להצגת פרטי הטיול
+        # תיבת טקסט להצגת פרטי הטיול (קריאה בלבד)
         self.trip_details = QTextEdit()
         self.trip_details.setReadOnly(True)
         self.trip_details.setAlignment(Qt.AlignLeft)
@@ -64,25 +66,28 @@ class CurrentTripView(QWidget):
         self.btn_edit_trip.clicked.connect(self.on_edit_trip_clicked)
         card_layout.addWidget(self.btn_edit_trip)
 
-        # הוספת ה־Card ל־layout הראשי
         layout.addWidget(trip_card)
-
         self.setLayout(layout)
 
+
+    """עדכון התצוגה עם פרטי הטיול הנוכחי"""
     def update_trip(self, trip_data: dict | None):
+
         self.current_trip = trip_data
-        """עדכון התצוגה עם נתוני הטיול הנוכחי"""
         if not trip_data:
+            # אין טיול נוכחי
             self.title.setText("No Current Trip")
             self.trip_details.setText("It looks like you don't have any upcoming trips.")
             return
 
+        # שליפת נתוני הטיול
         dest = trip_data.get("destination", "Unknown")
         start = trip_data.get("start_date", "?")
         end = trip_data.get("end_date", "?")
         sites = trip_data.get("selected_sites", [])
         transport = ", ".join(trip_data.get("transport", [])) if trip_data.get("transport") else "N/A"
 
+        # בניית טקסט להצגה
         sites_text = "\n".join(f"• {s}" for s in sites) if sites else "No attractions selected"
         notes = trip_data.get("notes", "")
 
@@ -96,11 +101,12 @@ class CurrentTripView(QWidget):
         if notes:
             details += f"\n\nNotes:\n{notes}"
 
+        # עדכון כותרת ותיבת טקסט
         self.title.setText(f"Current Trip: {dest}")
         self.trip_details.setText(details)
 
         
-
+    # טיפול בלחיצה על כפתור עריכת טיול
     def on_edit_trip_clicked(self):
         if self.current_trip and self.edit_trip_callback:
             self.edit_trip_callback(self.current_trip)

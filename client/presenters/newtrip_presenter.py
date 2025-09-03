@@ -1,33 +1,34 @@
 # client/presenters/newtrip_presenter.py
+
 from PySide6.QtWidgets import QDialog, QVBoxLayout, QLabel, QPushButton
 from client.services import api_client
 
-
-class NewTripPresenter:
-    """
-    מחלקת
-    Presenter
+"""
+    מחלקת  
+    Presenter  
     שאחראית על מסך יצירת טיול חדש.
-
     התפקיד שלה:
     - לטעון את רשימת האתרים מהשרת דרך ה־
-    API Client
-    - להציג פרטי אתר בחלון
-    Dialog
+      API Client  
+    - להציג פרטי אתר בחלון  
+      Dialog  
     - לשמור טיול חדש בשרת (קריאה ל־
-    API
-    )
+      API  
+      )
     - לעדכן תחזית מזג אוויר דרך ה־
-    API
-    """
-
+      API  
+"""
+class NewTripPresenter:
+ 
     def __init__(self, view, session_manager):
         # שמירה של ה־
         # View
         # שמחובר לפרזנטר הזה
         self.view = view
 
-        self.session_manager = session_manager  # 🟢 נוסיף את הסשן כאן
+        # שמירה של מנהל הסשן –  
+        # session_manager
+        self.session_manager = session_manager  
 
         # כאן נשמור את רשימת האתרים מהשרת
         self.sites = []
@@ -40,17 +41,16 @@ class NewTripPresenter:
         if hasattr(self.view, "refresh_weather_btn"):
             self.view.refresh_weather_btn.clicked.connect(self._on_refresh_weather)
 
-    # ===== אתרים לחיפוש =====
-    def load_sites(self, city, address, profile, limit=20):#self, city, address, profile):
-        """
-        שולחת בקשה לשירות דרך ה־
-        API Client
-        כדי לקבל אתרים בעיר נתונה
-        + חישובי מסלול בהתאם ל־
-        profile
-        .
-        """
 
+    """
+        שולחת בקשה לשירות דרך ה־
+        API Client  
+        כדי לקבל אתרים בעיר נתונה
+        וחישובי מסלול בהתאם ל־
+        profile.
+    """
+    def load_sites(self, city, address, profile, limit=20):
+     
         try:
             sites = api_client.get_sites(city=city, address=address, profile=profile, limit=limit)
             self.sites = sites or []
@@ -58,14 +58,15 @@ class NewTripPresenter:
         except Exception as e:
             self.view.show_error(f"Failed to load sites: {e}")
 
-    def show_site_details(self, index: int):
-        """
-        מציגה חלון
-        Dialog
+
+    """
+        מציגה חלון  
+        Dialog  
         עם פרטי אתר שנבחר,
         כולל כפתור להוספה לרשימת האטרקציות של המשתמש.
-        """
-
+    """
+    def show_site_details(self, index: int):
+   
         if index < 0 or index >= len(self.sites):
             return
 
@@ -86,6 +87,7 @@ class NewTripPresenter:
         layout.addWidget(QLabel(f"Rating: {rating}"))
         layout.addWidget(QLabel(description))
 
+        # אם יש תמונה – נציג אותה בחלון
         if image_url:
             from PySide6.QtGui import QPixmap
             from PySide6.QtCore import Qt
@@ -100,6 +102,7 @@ class NewTripPresenter:
             except Exception:
                 pass
 
+        # כפתור הוספה לרשימת האטרקציות
         add_btn = QPushButton("➕ Add to My Attractions")
         add_btn.clicked.connect(lambda: (self.view.add_site_to_my_list(name or "---"), dialog.accept()))
         layout.addWidget(add_btn)
@@ -107,62 +110,69 @@ class NewTripPresenter:
         dialog.setLayout(layout)
         dialog.exec()
 
-    # ===== שמירת טיול =====
-    def save_trip(self, username, start, end, city, transport, selected_sites, notes="", on_success=None, trip_id=None):
-            token = self.session_manager.user_token
-            if not token:
-                self.view.show_error("User is not logged in. Please log in first.")
-                return
+        
+    """
+    שמירה או עדכון של טיול חדש דרך השרת.
+    """
+    def save_trip(self, username, start, end, city, transport, selected_sites,
+                  notes: str = "", on_success=None, trip_id=None):
 
-            try:
-                trip_data = {
-                    "username": username,
-                    "destination": city,
-                    "start_date": start,
-                    "end_date": end,
-                    "selected_sites": [str(site) for site in selected_sites],
-                    "transport": [str(t) for t in (transport or [])],
-                    "notes": notes or ""
-                }
+        token = self.session_manager.user_token
+        if not token:
+            self.view.show_error("User is not logged in. Please log in first.")
+            return
 
-                if trip_id:  # 🟢 עריכה
-                    api_client.update_trip(trip_id, trip_data, token=token)
-                    self.view.show_message("Trip updated successfully!")
-                else:        # 🟢 יצירה
-                    api_client.create_trip(trip_data, token=token)
-                    self.view.show_message("Trip created successfully!")
+        try:
+            trip_data = {
+                "username": username,
+                "destination": city,
+                "start_date": start,
+                "end_date": end,
+                "selected_sites": [str(site) for site in selected_sites],
+                "transport": [str(t) for t in (transport or [])],
+                "notes": notes or ""
+            }
 
-                if on_success:
-                    on_success()
+            # אם יש trip_id → עדכון
+            if trip_id:  
+                api_client.update_trip(trip_id, trip_data, token=token)
+                self.view.show_message("Trip updated successfully!")
+            # יצירת טיול חדש
+            else:       
+                api_client.create_trip(trip_data, token=token)
+                self.view.show_message("Trip created successfully!")
 
-            except Exception as e:
-                self.view.show_error(f"Error saving trip: {e}")
+            if on_success:
+                on_success()
+
+        except Exception as e:
+            self.view.show_error(f"Error saving trip: {e}")
 
 
-    # ===== מזג אוויר (דרך השרת) =====
+    """
+    מבקשת תחזית מזג אוויר לעיר דרך ה־
+    API Client  
+    (קריאה אל שרת ה־
+    FastAPI).
+    """
     def update_weather(self, city: str):
-        """
-        מבקשת תחזית מזג אוויר לעיר דרך ה־
-        API Client
-        (קריאה אל שרת ה־
-        FastAPI
-        שלך).
-        """
+  
         try:
             forecast = api_client.get_weather(city)
             self.view.show_weather(forecast)
         except Exception as e:
             self.view.show_weather({"error": f"Failed to fetch forecast: {e}"})
 
-    # ===== חיבורי כפתורים אופציונליים מה־View =====
-    def _on_create_clicked(self):
-        """
+
+    """
         מופעל אם ה־
-        View
-        מספק פונקציה בשם
-        collect_form
+        View  
+        מספק פונקציה בשם  
+        collect_form  
         שמחזירה מילון נתונים.
-        """
+    """
+    def _on_create_clicked(self):
+     
         if hasattr(self.view, "collect_form"):
             data = self.view.collect_form()
 
@@ -170,7 +180,7 @@ class NewTripPresenter:
             # 1) transport  -> למשל ["car"]
             # 2) has_car    -> bool (נמיר לרשימת transport)
             transport = data.get("transport")
-            if transport is None:  # לא סופק transport, ננסה לגזור מ־has_car
+            if transport is None:  
                 has_car = bool(data.get("has_car"))
                 transport = ["car"] if has_car else ["foot"]
 
@@ -183,12 +193,14 @@ class NewTripPresenter:
                 selected_sites=data["selected_sites"],
             )
 
+
+    """
+    רענון תחזית לפי ערך שנמצא בשדה קלט של ה־
+    View  
+    (אם קיים).
+    """
     def _on_refresh_weather(self):
-        """
-        רענון תחזית מהיר לפי ערך שנמצא בשדה קלט של ה־
-        View
-        (אם קיים).
-        """
+   
         if hasattr(self.view, "destination_edit"):
             city = (self.view.destination_edit.text() or "").strip()
             if city:

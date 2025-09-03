@@ -4,81 +4,56 @@ from services.api_client import get_trips
 from views.search_view import SearchView
 from views.trip_detail_view import TripDetailView
 
-
+#מחלקה עבורת חיפוש טיולים
 class SearchPresenter:
-    """
-    מחלקת
-    Presenter
-    האחראית על חיפוש טיולים לפי עיר.
-
-    התפקידים:
-    - לקרוא את קלט המשתמש מה־
-      SearchView
-    - לשלוח בקשה ל־
-      API Client
-      (פונקציה
-      get_trips)
-    - להציג את התוצאות ברשימה
-    - לפתוח חלון פרטי טיול חדש כאשר לוחצים על פריט
-    """
-
+    
     def __init__(self, view: SearchView):
-        # שמירה על הפניה ל־
-        # SearchView
-        self.view = view
+      # שמירה על הפניה ל־
+      # SearchView
+      self.view = view
 
-        # חיבור הכפתור "Search" מה־
-        # View
-        # לפונקציית החיפוש
-        self.view.search_button.clicked.connect(self.search)
+      # חיבור הכפתור לחיפוש
+      self.view.search_button.clicked.connect(self.search)
 
-        # שמירה על חלון פרטי טיול כדי שלא ייסגר מיד ע"י
-        # Garbage Collector
-        self.detail_view = None
+      # שמירה על חלון פרטי טיול כדי שלא ייסגר מיד ע"י
+      # Garbage Collector
+      self.detail_view = None
 
+
+    #מופעל כאשר המשתמש לוחץ על כפתור החיפוש
     def search(self):
-        """
-        מופעל כאשר המשתמש לוחץ על כפתור החיפוש.
 
-        זרימה:
-        - קולט שם עיר מה־
-          QLineEdit
-        - שולח בקשה ל־
-          get_trips
-        - מנקה את הרשימה וממלא אותה בתוצאות חדשות
-        - מחבר את האירוע של לחיצה על פריט → הצגת פרטי טיול
-        """
-        city = self.view.search_input.text()
-        if not city:
-            return
+      city = self.view.search_input.text()
+      if not city:
+        return
 
-        trips = get_trips(city)
-        # שמירה פנימית כדי לדעת איזה
-        # Trip
-        # נבחר
-        self.trips = trips
+      trips = get_trips(city)
 
-        # איפוס הרשימה והכנסה מחדש
-        self.view.results_list.clear()
+      # שמירת התוצאות במשתנה פנימי כדי לדעת איזה טיול נבחר אחר כך
+      self.trips = trips
 
-        for trip in trips:
-            place = trip.get("place", {})
-            name = place.get("name", "Unknown")
-            category = place.get("category", "Unknown")
+      # איפוס הרשימה והכנסה מחדש
+      self.view.results_list.clear()
 
-            # מוסיפים שורה עם שם וקטגוריה
-            self.view.results_list.addItem(f"{name} ({category})")
+      # הוספת התוצאות החדשות לרשימה
+      for trip in trips:
+        place = trip.get("place", {})
+        name = place.get("name", "Unknown")
+        category = place.get("category", "Unknown")
 
-        # כל פריט שנלחץ יוביל להצגת פרטי הטיול
-        self.view.results_list.itemClicked.connect(self.show_trip_detail)
+        # מוסיפים שורה לרשימת התוצאות עם שם האתר והקטגוריה
+        self.view.results_list.addItem(f"{name} ({category})")
 
+      # חיבור כל פריט ברשימה כך שלחיצה עליו תציג את פרטי הטיול
+      self.view.results_list.itemClicked.connect(self.show_trip_detail)
+
+
+    # מציג את פרטי הטיול שנבחר
     def show_trip_detail(self, item):
-        """
-        מציג חלון חדש עם פרטי טיול שנבחר מהרשימה.
-        """
-        index = self.view.results_list.row(item)
-        trip_data = self.trips[index]
+       
+      index = self.view.results_list.row(item)
+      trip_data = self.trips[index]
 
-        # שמירה במשתנה כדי שהחלון לא ייסגר מיד
-        self.detail_view = TripDetailView(trip_data)
-        self.detail_view.show()
+      # שמירה במשתנה כדי שהחלון לא ייסגר מיד
+      self.detail_view = TripDetailView(trip_data)
+      self.detail_view.show()

@@ -1,19 +1,20 @@
 # client/presenters/trip_detail_presenter.py
 
-class TripDetailPresenter:
-    """
-    מחלקת
-    Presenter
+"""
+    מחלקת 
+    Presenter 
     עבור חלון פרטי טיול.
-
     התפקיד:
     - אחראית על חיבור אירועי ממשק מה־
-      View
-    - במקרה הזה: לחיצה על כפתור "Close"
-      תסגור את החלון
-    """
+    View
+    - במקרה הזה: לחיצה על כפתור 
+    "Close"
+    תסגור את החלון
+"""
+class TripDetailPresenter:
 
     def __init__(self, view):
+        
         # שמירה על הפניה ל־
         # View
         self.view = view

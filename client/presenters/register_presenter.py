@@ -2,54 +2,28 @@
 
 from PySide6.QtCore import QTimer
 import requests
-from client.services import api_client  # שכבת השירות שמדברת עם ה־
-                                        # Server
-                                        # דרך ה־
-                                        # API Client
+from client.services import api_client  
 
-
-class RegisterPresenter:
-    """
-    מחלקת
+"""
     Presenter
-    שאחראית על זרימת ההרשמה.
-
-    מחברת בין ה־
+     עבור תהליך ההרשמה.
+    מחבר בין ה־
     View
     (טופס הרשמה)
-    לבין שכבת השירות
-    API Client
-    ששולחת את הנתונים ל־
-    Server
-    ומחזירה תגובה.
-    """
+    לבין שכבת השירות 
+    (api_client).
+"""
+class RegisterPresenter:
 
     def __init__(self, view):
         # שמירה על הפניה ל־
-        # RegisterView
         self.view = view
 
+
+    # פונקציה לקריאה כאשר המשתמש לוחץ על כפתור ההרשמה
     def register_user(self, username: str, password: str):
-        """
-        נקראת כאשר המשתמש לוחץ על כפתור "Register".
-
-        מבצעת:
-        - ולידציה בסיסית בצד ה־
-          Client
-        - קריאה ל־
-          API Client
-          לביצוע הרשמה ב־
-          Server
-        - הצגת הודעת הצלחה/שגיאה ב־
-          View
-        - מעבר חזרה למסך התחברות לאחר
-          1.5s
-          (באמצעות
-          QTimer)
-        """
-
-        # בדיקה בסיסית בצד ה־
-        # Client
+    
+        # בדיקה: האם המשתמש מילא את כל השדות
         if not username or not password:
             self.view.show_error("Both fields are required.")
             return
@@ -61,44 +35,22 @@ class RegisterPresenter:
             # Server
             data = api_client.register(username, password)
 
-            # הודעת הצלחה:
-            # ננסה לשלוף "message" מהתגובה;
-            # אם אין — נשתמש בברירת מחדל באנגלית
+            # אם ההרשמה הצליחה – מציגים הודעת הצלחה
             message = data.get("message", "User registered successfully.")
             self.view.show_message("Success", message)
-
-            # חזרה למסך ההתחברות אחרי
-            # 1500ms
-            # באמצעות
-            # QTimer.singleShot
-            # חשוב: ב־
-            # View
-            # צריכה להיות פונקציה בשם
-            # go_to_login_callback
+            # מעבר אוטומטי חזרה למסך ההתחברות אחרי 1.5 שניות
             QTimer.singleShot(1500, self.view.go_to_login_callback)
 
         except requests.HTTPError as e:
-            # שגיאת
-            # HTTP
-            # מהשרת (למשל
-            # 400 / 409
-            # וכו'):
-            # ננסה להוציא
-            # detail
-            # מה־
-            # JSON
+            # שגיאת HTTP ספציפית מהשרת
             resp = e.response
             try:
                 detail = resp.json().get("detail", resp.text)
             except Exception:
                 detail = resp.text or str(e)
 
-            # מציגים למשתמש הודעת שגיאה באנגלית
+            # מציג הודעת שגיאה למשתמש
             self.view.show_error(detail or "Registration failed.")
-
         except requests.RequestException as e:
-            # שגיאת רשת / timeout וכד'
-            # (כל שגיאה שאינה
-            # HTTPError
-            # ספציפית)
+            # שגיאה כללית ברשת  
             self.view.show_error(f"Server error: {e}")
